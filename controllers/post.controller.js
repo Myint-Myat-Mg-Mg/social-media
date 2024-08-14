@@ -40,11 +40,13 @@ export const createPost = async (req, res) => {
         if (req.files && req.files.image) {
             imagePath = await uploadFile(req.files.image);
         }
+        console.log(imagePath);
         const newPost = await prisma.post.create({
             data: { authorId: parseInt(authorId, 10), title, content, image: imagePath },
         });
         res.json(newPost);
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error.message });
     }
 };

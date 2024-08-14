@@ -28,10 +28,10 @@ export const uploadFile = async (file) => {
     if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir);
     }
-
-    const filePath = join(uploadDir, `${Date.now()}-${file.name}`);
+    const fileName = Date.now()
+    const filePath = join(uploadDir, `${fileName}.${file.name.split('.')[1]}`);
     await file.mv(filePath);
-    return filePath;
+    return `/uploads/${fileName}.${file.name.split('.')[1]}`;
 };
 
 export const getFile = (req, res) => {
