@@ -1,5 +1,5 @@
 import express from 'express';
-import { getComments, createComment, getSingleComment } from "../controllers/comment.controller.js";
+import { getComments, createComment, getSingleComment, updateComment, deleteComment } from "../controllers/comment.controller.js";
 
 const commentRouter = express.Router();
 
@@ -9,10 +9,10 @@ commentRouter.get("/:id", getSingleComment);
 
 commentRouter.post("/", createComment);
 
-commentRouter.put("/");
+commentRouter.put("/", updateComment);
 
 commentRouter.patch("/");
 
-commentRouter.delete("/");
+commentRouter.delete("/", deleteComment);
 
 export default commentRouter;

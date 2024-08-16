@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
-const secretKey = "helloworld";
+// const secretKey = "helloworld";
 
 const prisma = new PrismaClient();
 
@@ -12,7 +13,7 @@ export const generateToken = (userName, id) => {
             id: id,
             generateDateTime: new Date()
         },
-        secretKey,
+        process.env.JWT_SECRET,
         {
             expiresIn: "1h"
         }
@@ -25,44 +26,44 @@ export const validateToken = (req, res, next) => {
     if (!token) return
     res.status(401).json({error: "Access Denied"});
     try {
-        const decoded = jwt.varfy(token, secretKey);
+        const decoded = jwt.varfy(token, process.env.JWT_SECRET);
         if (decoded) {
             console.log(decoded);
             next();
         }
     } catch (err) {
-        res.status(401).json({error: "Invalid token"});
+        res.status(401).json({error: "Invalid or expired token"});
     }
 };
 
 const userLogin = async (req, res) => {
     const { email, password } = req.body;
-
     const user = await prisma.user.findUnique({
         where: {
             email: email,
-            password: password,
-            
         },
         select: {
             name: true,
-            id: true
+            id: true,
+            email: true,
+            password: true
         }
     });
-    console.log(user);
+    console.log(user.password, 'user password');
 
-    if(user) {
-        const token = generateToken(user.name, user.id);
-        res.json({
-            message: "Login successful",
-            token: token
-        });
-    }  else {
-        res.status(401).json({
-            message: "Invalid email or password"
-        });
+    try {
+        if(!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({error: "Invalid email or passsword"});
 
-    }
+        }
+
+        const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {expiresIn: "1h"});
+    
+        res.json({ token });
+        } catch (error) {
+            console.log(error)
+        res.status(500).json({ error: error.message });
+        }
 
 };
 
