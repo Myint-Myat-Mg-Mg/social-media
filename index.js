@@ -7,9 +7,14 @@ import fileUpload from "express-fileupload";
 import path from "path";
 import { fileURLToPath } from 'url';
 import { dirname,join } from 'path';
+import swaggerUiExpress from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
+import { option } from "./swagger.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+import cors from "cors";
 
 const app = express();
 const port = 3000;
@@ -20,6 +25,13 @@ app.use("/users", userRouter);
 app.use("/auth", authRouter);
 app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
+
+const specs = swaggerJsdoc(options);
+app.use(
+  "/api-docs",
+  swaggerUiExpress.serve,
+  swaggerUiExpress.setup(specs)
+);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
