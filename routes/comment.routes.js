@@ -130,10 +130,10 @@ commentRouter.get("/:id", getSingleComment);
 
 commentRouter.post("/", createComment);
 
-commentRouter.put("/", updateComment);
+commentRouter.put("/:id", updateComment);
 
 commentRouter.patch("/");
 
-commentRouter.delete("/", deleteComment);
+commentRouter.delete("/:id", deleteComment);
 
 export default commentRouter;

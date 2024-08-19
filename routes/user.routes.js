@@ -136,10 +136,10 @@ userRouter.get("/:id", authenticateUser, getSingleUser);
 
 userRouter.post("/", createUser);
 
-userRouter.put("/", authenticateUser, updateUser);
+userRouter.put("/:id", authenticateUser, updateUser);
 
 userRouter.patch("/");
 
-userRouter.delete("/", deleteUser);
+userRouter.delete("/:id", deleteUser);
 
 export default userRouter;

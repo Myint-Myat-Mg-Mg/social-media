@@ -135,10 +135,10 @@ postRouter.get("/:id", getSinglePost);
 
 postRouter.post("/", createPost);
 
-postRouter.put("/", updatePost);
+postRouter.put("/:id", updatePost);
 
 postRouter.patch("/");
 
-postRouter.delete("/", deletePost);
+postRouter.delete("/:id", deletePost);
 
 export default postRouter;
