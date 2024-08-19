@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { dirname,join } from 'path';
 import swaggerUiExpress from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
-import { option } from "./swagger.js"
+import { options } from "./swagger.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +20,7 @@ const app = express();
 const port = 3000;
 app.use(express.json());
 app.use(fileUpload());
+app.use(cors());
 
 app.use("/users", userRouter);
 app.use("/auth", authRouter);

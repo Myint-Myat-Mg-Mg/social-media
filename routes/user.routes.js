@@ -23,11 +23,11 @@ const userRouter = express.Router();
  *           type: string
  *           description: Email of user
  *         password:
- *         type: string
- *         description: Password of user
+ *            type: string
+ *            description: Password of user
  *         bio:
- *         type: string
- *         description: about user
+    *         type: string
+    *         description: about user
  *       example:
  *         name: "Myint Myat Mg Mg"
  *         email: "email@gmail.com"
