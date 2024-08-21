@@ -13,7 +13,8 @@ export const getUsers = async (req, res) => {
                 name: true,
                email: true,
                bio: true,
-               image: true
+               image: true,
+               password: true
 
             }
         });

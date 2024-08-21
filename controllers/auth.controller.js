@@ -49,7 +49,6 @@ const userLogin = async (req, res) => {
             password: true
         }
     });
-    console.log(user.password, 'user password');
 
     try {
         if(!user || !(await bcrypt.compare(password, user.password))) {
@@ -70,10 +69,11 @@ const userLogin = async (req, res) => {
 const userRegister = async (req, res) => {
     try {
         const { email, password, name } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
         const result = await prisma.user.create({
             data: {
                 email: email,
-                password: password,
+                password: hashedPassword,
                 name 
             },  
             select: {
