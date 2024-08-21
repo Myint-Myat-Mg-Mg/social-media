@@ -16,9 +16,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import cors from "cors";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = process.env.port || 3000;
 app.use(express.json());
 app.use(fileUpload());
 app.use(cors());
