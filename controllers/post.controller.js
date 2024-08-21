@@ -10,7 +10,15 @@ const __dirname = dirname(__filename);
 
 export const getPosts = async (req, res) => {
     try {
-        const posts = await prisma.post.findMany();
+        const posts = await prisma.post.findMany({
+            include: {
+                _count: {
+                    select: {
+                        likes: true
+                    }
+                }
+            }
+        });
         res.json(posts);
     } catch (error) {
         res.status(500).json({ error: error.message });

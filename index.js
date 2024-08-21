@@ -3,6 +3,7 @@ import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import postRouter from "./routes/post.routes.js";
 import commentRouter from "./routes/comment.routes.js";
+import likeRouter from "./routes/like.routes.js";
 import fileUpload from "express-fileupload";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -26,6 +27,7 @@ app.use("/users", userRouter);
 app.use("/auth", authRouter);
 app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
+app.use("/likes", likeRouter);
 
 const specs = swaggerJsdoc(options);
 app.use(
