@@ -33,7 +33,7 @@ export const getPosts = async (req, res) => {
             }
         })
 
-        res.json(newFormattedPost);
+        res.json({data: newFormattedPost});
         
     } catch (error) {
         res.status(500).json({ error: error.message });
