@@ -19,7 +19,22 @@ export const getPosts = async (req, res) => {
                 }
             }
         });
-        res.json(posts);
+
+        const newFormattedPost = posts.map(post => {
+            return {
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                authorId: post.authorId,
+                image: post.image,
+                createdAt: post.CreatedAt,
+                updatedAt: post.UpdatedAt,
+                reactionCount: post._count.likes 
+            }
+        })
+
+        res.json(newFormattedPost);
+        
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

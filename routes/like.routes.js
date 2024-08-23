@@ -1,13 +1,13 @@
 import express from "express";
-import { getLikesForPost, likePost, unlikePost } from "../controllers/like.controller.js";
+import { getReactionsForPost, addReaction, getReactionsByType } from "../controllers/like.controller.js";
 import { authenticateUser } from "../middleware/authmiddleware.js";
 
 const likeRouter = express.Router();
 
-likeRouter.post("/", authenticateUser, likePost);
+likeRouter.post("/reactions", authenticateUser, addReaction);
 
-likeRouter.post("/unlike", authenticateUser, unlikePost);
+likeRouter.get("/posts/:postId/reactions", authenticateUser, getReactionsForPost);
 
-likeRouter.get("/:postId", authenticateUser, getLikesForPost);
+likeRouter.get("/posts/:postId/reactions/:reactionType", authenticateUser, getReactionsByType);
 
 export default likeRouter;

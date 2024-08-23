@@ -42,16 +42,20 @@ export const getSingleUser = async (req, res) => {
 export const createUser = async (req, res) => {
     try {
         const { name, email, password, bio } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword,
-                bio
-             },
-        });
-        res.json(newUser);
+        if (!name || !email || !password) {
+            res.status(400).json({ error: "Name,email and password are requried"});
+        } else {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const newUser = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hashedPassword,
+                    bio
+                 },
+            });
+            res.json(newUser);
+        }
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -59,38 +63,44 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
     const { name, email, bio, oldPassword, newPassword } = req.body;
-    try {
-        const user = await prisma.user.update({
-            where: { id: req.user.id },
-        });
-        
-        if (!user) {
-            res.status(404).json({ error: "User not found" });
-        }
-
-        if (oldPassword && newPassword) {
-            const isMatch = await bcrypt.compare(oldPassword, user.password);
-
-            if (!isMatch) {
-                res.status(404).json({ error: "Old password is incorrect"});
+    if (!name || !email || (newPassword && !oldPassword)) {
+        return res.status(400).json({ error: "Name, email, old password (if changing password), and new password are required." });
+    } else {
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id: req.user.id },
+            });
+            
+            if (!user) {
+                res.status(404).json({ error: "User not found" });
             }
+    
+            if (oldPassword && newPassword) {
+                const isMatch = await bcrypt.compare(oldPassword, user.password);
+    
+                if (!isMatch) {
+                    res.status(404).json({ error: "Old password is incorrect"});
+                }
+    
+                const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    
+                await prisma.user.update({
+                    where: { id: req.user.id },
+                    data: { password: hashedNewPassword }
+                });
+            }
+                const updatedUser = await prisma.user.update({
+                    where: { id: req.user.id },
+                    data: { name, email, bio }
+                });
+    
+            res.status(200).json(updatedUser);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        };
 
-            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
-            await prisma.user.update({
-                where: { id: req.user.id },
-                data: { password: hashedNewPassword }
-            });
-        }
-            const updatedUser = await prisma.user.update({
-                where: { id: req.user.id },
-                data: { name, email, bio }
-            });
-
-        res.status(200).json(updatedUser);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    };
+    }
+    
 };
 
 export const deleteUser = async (req, res) => {
