@@ -6,21 +6,52 @@ const prisma = new PrismaClient();
 let users = [];
 
 export const getUsers = async (req, res) => {
+    const { search } = req.query;
+
+
+    if (!search) {
+        return res.status(400).json({ error: "Search query is required" });
+    }
+
     try {
         const users = await prisma.user.findMany({
+            where: {
+                OR: [
+                    {
+                        name: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        email: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                ]
+            },
             select: {
                 id: true,
                 name: true,
-               email: true,
-               bio: true,
-               image: true,
-               password: true
-
+                email: true,
+                image: true,
+                bio: true,
             }
         });
-        res.json(users);
+        const newFormattedUser = users.map(user => {
+            return {
+                id: user.id,
+                name: user.name,
+                image: user.image,
+                bio: user.bio
+            }
+        })
+
+        res.json({data: newFormattedUser});
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.log(error)
+        res.status(500).json({ error: "An error occurred while searching for users." });
     }
 };
 
