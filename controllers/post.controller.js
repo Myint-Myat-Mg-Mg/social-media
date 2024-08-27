@@ -9,8 +9,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export const getPosts = async (req, res) => {
+    const { search } = req.query;
+
+    if (!search) {
+        return res.status(400).json({ error: "Search query is required"});
+    }
     try {
         const posts = await prisma.post.findMany({
+            where: {
+                OR: [
+                    {
+                        title: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        content: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    }
+                ]
+            },
             include: {
                 _count: {
                     select: {
