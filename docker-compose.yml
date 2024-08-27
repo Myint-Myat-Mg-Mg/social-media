@@ -1,0 +1,14 @@
+services:
+  app: 
+    image: social-docker
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 7032:3000
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - .:/app
+    command: node index.js
