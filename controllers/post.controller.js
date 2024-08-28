@@ -11,27 +11,28 @@ const __dirname = dirname(__filename);
 export const getPosts = async (req, res) => {
     const { search } = req.query;
 
-    if (!search) {
-        return res.status(400).json({ error: "Search query is required"});
-    }
     try {
-        const posts = await prisma.post.findMany({
-            where: {
-                OR: [
-                    {
-                        title: {
-                            contains: search,
-                            mode: 'insensitive'
-                        }
-                    },
-                    {
-                        content: {
-                            contains: search,
-                            mode: 'insensitive'
-                        }
+        const searchConditions = search
+        ? {
+            OR: [
+                {
+                    title: {
+                        contains: search,
+                        mode: 'insensitive'
                     }
-                ]
-            },
+                },
+                {
+                    content: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                }
+            ]
+        }
+        : {};
+
+        const posts = await prisma.post.findMany({
+            where: searchConditions,
             include: {
                 _count: {
                     select: {
@@ -57,7 +58,7 @@ export const getPosts = async (req, res) => {
         res.json({data: newFormattedPost});
         
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: "An error occurred while fetching posts." });
     }
 };
 
