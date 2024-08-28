@@ -134,13 +134,19 @@ export const updateUser = async (req, res) => {
 };
 
 export const deleteUser = async (req, res) => {
-    const { id } = req.params.id;
+    const { id } = req.params;
+    const loggedInUserId = req.user;
+
     try {
+        if(Number(id) !== loggedInUserId) {
+            return res.status(403).json({ error: "You do not have permission to delete this user." });
+        }
+
         await prisma.user.delete({
             where: { id: Number(id) }
         }); 
         res.status(200).json({ message: "User deleted successfully" });
     } catch (error) {
-        req.status(500).json({ error: error.message});
+        res.status(500).json({ error: error.message});
     };
 };
