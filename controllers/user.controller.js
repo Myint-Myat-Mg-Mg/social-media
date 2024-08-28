@@ -8,29 +8,28 @@ let users = [];
 export const getUsers = async (req, res) => {
     const { search } = req.query;
 
-
-    if (!search) {
-        return res.status(400).json({ error: "Search query is required" });
-    }
-
     try {
-        const users = await prisma.user.findMany({
-            where: {
-                OR: [
-                    {
-                        name: {
-                            contains: search,
-                            mode: 'insensitive'
-                        }
-                    },
-                    {
-                        email: {
-                            contains: search,
-                            mode: 'insensitive'
-                        }
+        const searchConditions = search
+        ? {
+            OR: [
+                {
+                    name: {
+                        contains: search,
+                        mode: 'insensitive'
                     }
-                ]
-            },
+                },
+                {
+                    email: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                }
+            ]
+        }
+        : {};
+
+        const users = await prisma.user.findMany({
+            where: searchConditions,
             select: {
                 id: true,
                 name: true,
@@ -46,7 +45,7 @@ export const getUsers = async (req, res) => {
                 image: user.image,
                 bio: user.bio
             }
-        })
+        });
 
         res.json({data: newFormattedUser});
     } catch (error) {
