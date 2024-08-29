@@ -43,7 +43,11 @@ export const getPosts = async (req, res) => {
                     select: {
                         id: true,
                         content: true,
-                        authorId: true,
+                        author: {
+                            select: {
+                                name: true
+                            }
+                        },
                         createdAt: true,
                         updatedAt: true
                     }
@@ -64,7 +68,7 @@ export const getPosts = async (req, res) => {
                 comments: post.comments.map(comment => ({
                     id: comment.id,
                     content: comment.content,
-                    authorId: comment.authorId,
+                    authorName: comment.author.name,
                     createdAt: comment.createdAt,
                     updatedAt: comment.updatedAt
                 }))
@@ -93,7 +97,11 @@ export const getSinglePost = async (req, res) => {
                     select: {
                         id: true,
                         content: true,
-                        authorId: true,
+                        author: {
+                            select: {
+                                name: true
+                            }
+                        },
                         createdAt: true,
                         updatedAt: true
                     }
@@ -116,7 +124,7 @@ export const getSinglePost = async (req, res) => {
                 comments: post.comments.map(comment => ({
                     id: comment.id,
                     content: comment.content,
-                    authorId: comment.authorId,
+                    authorName: comment.author.name,
                     createdAt: comment.createdAt,
                     updatedAt: comment.updatedAt
                 }))
@@ -133,17 +141,45 @@ export const createPost = async (req, res) => {
         let imagePath = null;
 
         if (req.files && req.files.image) {
-            imagePath = await uploadFile(req.files.image);
+            try {
+                imagePath = await uploadFile(req.files.image);
+                console.log("Image path received:", imagePath);
+            } catch (uploadError) {
+                console.error("Error uploading file:", uploadError);
+                return res.status(500).json({ error: "Failed to upload image." });
+            }
+        } else {
+            console.log("No image found in request.");
         }
-        
+
         const newPost = await prisma.post.create({
             data: { authorId: req.user.id, title, content, image: imagePath },
         });
+
         res.json(newPost);
     } catch (error) {
+        console.error("Error creating post:", error);
         res.status(500).json({ error: error.message });
     }
 };
+
+// export const createPost = async (req, res) => {
+//     try {
+//         const { title, content } = req.body;
+//         let imagePath = null;
+
+//         if (req.files && req.files.image) {
+//             imagePath = await uploadFile(req.files.image);
+//         }
+        
+//         const newPost = await prisma.post.create({
+//             data: { authorId: req.user.id, title, content, image: imagePath },
+//         });
+//         res.json(newPost);
+//     } catch (error) {
+//         res.status(500).json({ error: error.message });
+//     }
+// };
 
 export const updatePost = async (req, res) => {
     const { id } = req.params;
