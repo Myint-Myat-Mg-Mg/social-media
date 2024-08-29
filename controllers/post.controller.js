@@ -38,6 +38,15 @@ export const getPosts = async (req, res) => {
                     select: {
                         likes: true
                     }
+                },
+                comments: {
+                    select: {
+                        id: true,
+                        content: true,
+                        authorId: true,
+                        createdAt: true,
+                        updatedAt: true
+                    }
                 }
             }
         });
@@ -51,9 +60,16 @@ export const getPosts = async (req, res) => {
                 image: post.image,
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
-                reactionCount: post._count.likes 
+                reactionCount: post._count.likes,
+                comments: post.comments.map(comment => ({
+                    id: comment.id,
+                    content: comment.content,
+                    authorId: comment.authorId,
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt
+                }))
             }
-        })
+        });
 
         res.json({data: newFormattedPost});
         
@@ -66,12 +82,46 @@ export const getSinglePost = async (req, res) => {
     const {id} = req.params;
     try {
         const post = await prisma.post.findUnique({
-            where: { id: Number(id)}
+            where: { id: Number(id)},
+            include: {
+                _count: {
+                    select: {
+                        likes: true
+                    }
+                },
+                comments: {
+                    select: {
+                        id: true,
+                        content: true,
+                        authorId: true,
+                        createdAt: true,
+                        updatedAt: true
+                    }
+                }
+            }
         });
         if (!post) {
             res.status(404).json({ error: "Post not found" });
         }
-        res.status(200).json(post);
+
+        const newFormattedPost = {
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                authorId: post.authorId,
+                image: post.image,
+                createdAt: post.CreatedAt,
+                updatedAt: post.UpdatedAt,
+                reactionCount: post._count.likes,
+                comments: post.comments.map(comment => ({
+                    id: comment.id,
+                    content: comment.content,
+                    authorId: comment.authorId,
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt
+                }))
+            }
+        res.status(200).json(newFormattedPost);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -115,10 +165,26 @@ export const updatePost = async (req, res) => {
 
 export const deletePost = async (req, res) => {
     const { id } = req.params;
+    const authorId = req.user.id;
+
     try {
-        await prisma.post.delete({
-            where: { id: Number(id) } 
+        const post = await prisma.post.findUnique ({
+            where: { id: Number(id) },
+            select: { authorId: true }
         });
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+        
+        if (post.authorId !== authorId) {
+            return res.status(403).json({ error: "You do not have permission to delete this post" });
+        }
+
+        await prisma.post.delete({
+            where: { id: Number(id) }
+        });
+
         res.status(200).json({ message: "Post deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });

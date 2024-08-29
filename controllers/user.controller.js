@@ -63,7 +63,17 @@ export const getSingleUser = async (req, res) => {
         if (!user) {
             req.status(404).json({ error: "User not found" });
         }
-        res.status(200).json(user);
+        const newFormattedUser = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                passwrod: user.password,
+                image: user.image,
+                bio: user.bio,
+                createdAt: user.CreatedAt,
+                updatedAt: user.UpdatedAt
+            }
+        res.status(200).json(newFormattedUser);
     } catch (error) {
         req.status(500).json({ error: error.message });
     }
