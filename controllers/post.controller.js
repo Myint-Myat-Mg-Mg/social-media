@@ -39,6 +39,11 @@ export const getPosts = async (req, res) => {
                         likes: true
                     }
                 },
+                author: {
+                    select: {
+                        name: true
+                    }
+                },
                 comments: {
                     select: {
                         id: true,
@@ -60,7 +65,7 @@ export const getPosts = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                authorId: post.authorId,
+                authorName: post.author.name,
                 image: post.image,
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,

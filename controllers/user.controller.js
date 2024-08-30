@@ -152,10 +152,22 @@ export const deleteUser = async (req, res) => {
             return res.status(403).json({ error: "You do not have permission to delete this user." });
         }
 
-        await prisma.user.delete({
-            where: { id: Number(id) }
-        }); 
-        res.status(200).json({ message: "User deleted successfully" });
+        await prisma.$transaction(async (prisma) => {
+            await prisma.comment.deleteMany({
+                where: { authorId: Number(id) }
+            })
+
+            await prisma.post.deleteMany({
+                where: { authorId: Number(id) }
+            })
+
+            await prisma.user.delete({
+                where: { id: Number(id) }
+            })
+
+        })
+ 
+        res.status(200).json({ message: "User and all related posts and comments are deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message});
     };
