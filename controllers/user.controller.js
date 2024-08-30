@@ -99,7 +99,7 @@ export const getSingleUser = async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                passwrod: user.password,
+                password: user.password,
                 image: user.image,
                 bio: user.bio,
                 createdAt: user.CreatedAt,
