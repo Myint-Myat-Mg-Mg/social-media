@@ -189,10 +189,29 @@ export const createPost = async (req, res) => {
 export const updatePost = async (req, res) => {
     const { id } = req.params;
     const { title, content } = req.body;
+    let imagePath = null;
+
     try {
+
+        if (req.files && req.files.image) {
+            try {
+                imagePath = await uploadFile(req.files.image);
+                console.log("New image path received:", imagePath);
+            } catch (uploadError) {
+                console.log("Error uploading file:", uploadError);
+                return res.status(500).json({ error: "Failed to upload image." });
+            }
+        }
+
+        const updateData = { title, content };
+
+        if (imagePath) {
+            updateData.image = imagePath;
+        }
+
         const post = await prisma.post.update({
             where: { id : Number(id) },
-            data: { title, content }
+            data: updateData
         });
         
         if (!post) {
