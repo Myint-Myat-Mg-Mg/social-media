@@ -1,5 +1,6 @@
 import express from 'express';
 import { getComments, createComment, getSingleComment, updateComment, deleteComment } from "../controllers/comment.controller.js";
+import { authenticateUser } from "../middleware/authmiddleware.js";
 
 const commentRouter = express.Router();
 
@@ -124,13 +125,13 @@ const commentRouter = express.Router();
  *         description: Comment not found
  */
 
-commentRouter.get("/", getComments);
+commentRouter.get("/", authenticateUser, getComments);
 
 commentRouter.get("/:id", getSingleComment);
 
-commentRouter.post("/", createComment);
+commentRouter.post("/", authenticateUser, createComment);
 
-commentRouter.put("/:id", updateComment);
+commentRouter.put("/:id", authenticateUser, updateComment);
 
 commentRouter.patch("/");
 

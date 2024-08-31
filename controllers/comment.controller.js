@@ -27,10 +27,16 @@ export const getSingleComment = async (req, res) => {
 }
 
 export const createComment = async (req, res) => {
+    const { postId, content, user } = req.body;
+    const authorId = req.user.id;
+
+    if (!postId || !content) {
+        return res.status(400).json({ error: "PostId and content are required" });
+    }
+
     try {
-        const { authorId, postId, content  } = req.body;
-        const newComment = await prisma.comment.create({ 
-            data: { authorId, postId, content },
+        const newComment = await prisma.comment.create ({ 
+            data: { authorId, postId: Number(postId), content },
         });
         res.json(newComment);
     } catch (error) {
@@ -40,11 +46,12 @@ export const createComment = async (req, res) => {
 
 export const updateComment = async (req, res) => {
     const { id } = req.params;
-    const { authorId, postId, content } = req.body;
+    const { postId, content } = req.body;
+    const authorId = req.user.id;
     try {
         const comment = await prisma.comment.update({
             where: { id: Number(id) },
-            data: { authorId, postId, content }
+            data: { authorId, postId: Number(postId), content }
         });
 
         if (!comment) {
