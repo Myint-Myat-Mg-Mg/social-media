@@ -18,18 +18,98 @@ export const generateToken = (userName, id) => {
     return token;
 }
 
-export const validateToken = (req, res, next) => {
+// export const validateToken = async (req, res, next) => {
+//     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET);
+//     if (!token) return
+//     res.status(401).json({error: "Access Denied"});
+//     try {
+//         const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+//         if (decoded) {
+//             console.log(decoded);
+//             req.user = decoded;
+
+           
+//             const userId = user.id;
+//             const tokenID = {
+//                 tk,
+//                 userId
+//             }
+//             return res.status(200).json({ tokenID });
+//         }
+//     } catch (err) {
+//         res.status(401).json({error: "Invalid token"});
+//     }
+// };
+export const validateUser = async (req, res) => {
     const token = req.header("Authorization")?.split(" ")[1];
-    if (!token) return
-    res.status(401).json({error: "Access Denied"});
+
+    if (!token) {
+        return res.status(401).json({ error: "Access Denied" });
+    }
+
     try {
-        const decoded = jwt.varfy(token, process.env.JWT_SECRET);
-        if (decoded) {
-            console.log(decoded);
-            next(token);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        const user = await prisma.user.findUnique({
+            where: { id: Number(decoded.id) },
+            include: {
+                posts: {
+                    include: {
+                        comments: {
+                            select: {
+                                id: true,
+                                content: true,
+                                author: {
+                                    select: {
+                                        name: true
+                                    }
+                                },
+                                createdAt: true,
+                                updatedAt: true
+                            }
+                        },
+                        _count: {
+                            select: { likes: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
         }
-    } catch (err) {
-        res.status(401).json({error: "Invalid token"});
+
+        const newFormattedUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            bio: user.bio,
+            createdAt: user.CreatedAt,
+            updatedAt: user.UpdatedAt,
+            posts: user.posts.map(post => ({
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                image: post.image,
+                createdAt: post.CreatedAt,
+                updatedAt: post.UpdatedAt,
+                reactionCount: post._count.likes,
+                comments: post.comments.map(comment => ({
+                    id: comment.id,
+                    content: comment.content,
+                    authorName: comment.author.name,
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt
+                }))
+            }))
+        };
+
+        res.status(200).json(newFormattedUser);
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        res.status(401).json({ error: "Invalid token" });
     }
 };
 

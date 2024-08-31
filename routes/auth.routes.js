@@ -1,5 +1,6 @@
 import express from 'express';
-import { validateToken, userLogin, userRegister } from "../controllers/auth.controller.js";
+import { validateUser, userLogin, userRegister } from "../controllers/auth.controller.js";
+import { authenticateUser } from '../middleware/authmiddleware.js';
 
 const authRouter = express.Router();
 
@@ -126,7 +127,7 @@ authRouter.post('/login', userLogin);
 // authRouter.get("/validate", (req, res) => {
 //     res.send("Validate route");
 // })
-authRouter.get("/validate", validateToken);
+authRouter.get("/validate", authenticateUser, validateUser);
 
 authRouter.post("/register", userRegister);
 

@@ -48,6 +48,7 @@ export const getPosts = async (req, res) => {
                     select: {
                         id: true,
                         content: true,
+                        authorId: true,
                         author: {
                             select: {
                                 name: true
@@ -102,6 +103,7 @@ export const getSinglePost = async (req, res) => {
                     select: {
                         id: true,
                         content: true,
+                        authorId: true,
                         author: {
                             select: {
                                 name: true
@@ -129,6 +131,7 @@ export const getSinglePost = async (req, res) => {
                 comments: post.comments.map(comment => ({
                     id: comment.id,
                     content: comment.content,
+                    authorId: comment.authorId,
                     authorName: comment.author.name,
                     createdAt: comment.createdAt,
                     updatedAt: comment.updatedAt
