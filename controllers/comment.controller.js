@@ -27,7 +27,7 @@ export const getSingleComment = async (req, res) => {
 }
 
 export const createComment = async (req, res) => {
-    const { postId, content, user } = req.body;
+    const { postId, content, parentId } = req.body;
     const authorId = req.user.id;
 
     if (!postId || !content) {
@@ -35,8 +35,18 @@ export const createComment = async (req, res) => {
     }
 
     try {
+        if (parentId) {
+            const parentComment = await prisma.comment.findUnique({
+                where: { id: Number(parentId) }
+            });
+
+            if (!parentComment) {
+                res.status(404).json({ error: "Comment does not exist" });
+            }
+        }
+
         const newComment = await prisma.comment.create ({ 
-            data: { authorId, postId: Number(postId), content },
+            data: { authorId, postId: Number(postId), content, parentId: parentId ? Number(parentId) : null },
         });
         res.json(newComment);
     } catch (error) {
