@@ -10,6 +10,7 @@ const __dirname = dirname(__filename);
 
 export const getPosts = async (req, res) => {
     const { search } = req.query;
+    const authorId = req.user.id;
 
     try {
         const searchConditions = search
@@ -41,6 +42,7 @@ export const getPosts = async (req, res) => {
                 },
                 author: {
                     select: {
+                        id: true,
                         name: true
                     }
                 },
@@ -57,7 +59,18 @@ export const getPosts = async (req, res) => {
                         createdAt: true,
                         updatedAt: true
                     }
+                },
+                likes: {
+                    where: {
+                        authorId: authorId
+                    },
+                    select: {
+                        id: true,
+                    }
                 }
+            },
+            orderBy: {
+                UpdatedAt: "desc"
             }
         });
 
@@ -66,11 +79,13 @@ export const getPosts = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
+                authorId: post.author.id,
                 authorName: post.author.name,
                 image: post.image,
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
                 reactionCount: post._count.likes,
+                userHasReacted: post.likes.length > 0,
                 comments: post.comments.map(comment => ({
                     id: comment.id,
                     content: comment.content,
