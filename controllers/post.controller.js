@@ -61,12 +61,10 @@ export const getPosts = async (req, res) => {
                     }
                 },
                 likes: {
-                    where: {
-                        authorId: authorId
-                    },
                     select: {
                         id: true,
-                        reactionType: true
+                        reactionType: true,
+                        authorId: true
                     }
                 }
             },
@@ -76,10 +74,18 @@ export const getPosts = async (req, res) => {
         });
 
         const newFormattedPost = posts.map(post => {
-            const reactionCount = post.likes.reduce((acc, like) => {
-                acc[like.reactionType] = (acc[like.reactionType] || 0) + 1;
-                return acc;
-            }, {});
+            const reactionCount = {
+                LIKE: 0,
+                LOVE: 0,
+                HAHA: 0,
+                SAD: 0,
+                ANGRY: 0
+            };
+            post.likes.forEach(like => {
+                if (reactionCount.hasOwnProperty(like.reactionType)) {
+                    reactionCount[like.reactionType]++;
+                }
+            });
             return {
                 id: post.id,
                 title: post.title,
