@@ -81,9 +81,16 @@ export const getPosts = async (req, res) => {
                 SAD: 0,
                 ANGRY: 0
             };
+            
+            let userReactonType = null;
+
             post.likes.forEach(like => {
                 if (reactionCount.hasOwnProperty(like.reactionType)) {
                     reactionCount[like.reactionType]++;
+                }
+
+                if (like.authorId === authorId) {
+                    userReactonType = like.reactionType;
                 }
             });
             return {
@@ -97,7 +104,7 @@ export const getPosts = async (req, res) => {
                 updatedAt: post.UpdatedAt,
                 reactionCount: post._count.likes,
                 reactions: reactionCount,
-                userHasReacted: post.likes.length > 0,
+                userReactonType: userReactonType,
                 comments: post.comments.map(comment => ({
                     id: comment.id,
                     content: comment.content,
