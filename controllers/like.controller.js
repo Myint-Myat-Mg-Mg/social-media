@@ -5,6 +5,12 @@ const prisma = new PrismaClient();
 export const addReaction = async (req, res) => {
     const { postId, reactionType }  = req.body;
     const authorId = req.user.id;
+
+    const validReaction =  ["LIKE", "LOVE", "HAHA", "SAD", "ANGRY"];
+    if (!validReaction.includes(reactionType)) {
+        return res.status(400).json({ error: "Invalid reaction type" });
+    }
+
     try {
         const existingReaction = await prisma.like.findFirst({
             where: {
@@ -41,7 +47,7 @@ export const addReaction = async (req, res) => {
                 reactionType 
             },             
          });
-         res.status(200).json({ message: `Add ${reactionType} reaction to the post` , reaction: newReaction});
+         res.status(200).json({ message: `Added ${reactionType} reaction to the post` , reaction: newReaction});
         }
     } catch (error) {
         res.status(500).json({ error: "An error occurred while adding a reaction." });

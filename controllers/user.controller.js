@@ -147,20 +147,29 @@ export const createUser = async (req, res) => {
         }
 
         if (!name || !email || !password) {
-            res.status(400).json({ error: "Name,email and password are requried"});
-        } else {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const newUser = await prisma.user.create({
-                data: {
-                    name,
-                    email,
-                    password: hashedPassword,
-                    bio,
-                    image: imagePath
-                 },
-            });
-            res.json(newUser);
+            return res.status(400).json({ error: "Name,email and password are requried"});
         }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (!existingUser) {
+            return res.status(400).json({ error: "Email is not registered. Please register first." });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await prisma.user.update({
+            where: { email },
+            data: {
+                name,
+                password: hashedPassword,
+                bio,
+                image: imagePath
+             },
+        });
+        res.json(newUser);    
+
     } catch (error) {
         console.error("Error creating user:", error);
         res.status(500).json({ error: error.message });

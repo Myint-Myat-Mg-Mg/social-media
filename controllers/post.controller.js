@@ -66,6 +66,7 @@ export const getPosts = async (req, res) => {
                     },
                     select: {
                         id: true,
+                        reactionType: true
                     }
                 }
             },
@@ -75,6 +76,10 @@ export const getPosts = async (req, res) => {
         });
 
         const newFormattedPost = posts.map(post => {
+            const reactionCount = post.likes.reduce((acc, like) => {
+                acc[like.reactionType] = (acc[like.reactionType] || 0) + 1;
+                return acc;
+            }, {});
             return {
                 id: post.id,
                 title: post.title,
@@ -85,6 +90,7 @@ export const getPosts = async (req, res) => {
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
                 reactionCount: post._count.likes,
+                reactions: reactionCount,
                 userHasReacted: post.likes.length > 0,
                 comments: post.comments.map(comment => ({
                     id: comment.id,

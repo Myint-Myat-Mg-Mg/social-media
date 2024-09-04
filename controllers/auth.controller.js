@@ -159,8 +159,16 @@ const userRegister = async (req, res) => {
         const { email, password, name } = req.body;
 
         if (!name || !email || !password) {
-            res.status(400).json({ error: "Name,email and password are requried"});
-        } else {
+            return res.status(400).json({ error: "Name, email and password are requried"});
+        }
+
+        const existingUser = await prisma.user.findUnique({
+            where: { email },
+        });
+
+        if(existingUser) {
+            return res.status(400).json({ error: "Email is already in use" });
+        }
         const hashedPassword = await bcrypt.hash(password, 10);
         const result = await prisma.user.create({
             data: {
@@ -170,13 +178,14 @@ const userRegister = async (req, res) => {
             },  
             select: {
                 id: true,
-                name: true
+                name: true,
+                email: true
             }
 
         });
         const newUser = result;
         res.status(201).json(newUser);
-    }
+
     } catch (err) {
         console.log("Error registering user:", err);
         res.status(400).json({ error: `Error registering user: ${err.message}`});
