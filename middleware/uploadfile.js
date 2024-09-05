@@ -17,7 +17,9 @@ export const uploadFile = async (file) => {
             console.log("Upload directory created at:", uploadDir);
         }
 
-        const fileName = `${Date.now()}.${file.name.split('.').pop()}`;
+        const fileExtension = path.extname(file.name).slice(1);
+
+        const fileName = `${Date.now()}.${fileExtension}`;
         const filePath = join(uploadDir, fileName);
 
         await file.mv(filePath);
@@ -28,7 +30,7 @@ export const uploadFile = async (file) => {
         console.error("Error during file upload:", error);
         throw error;  
     }
-};
+}; 
 //     const fileToUpload = req.files.image;
 //     const uploadsPath = join(__dirname, "../uploads", fileToUpload.name);
 //     fileToUpload.mv(uploadsPath, (error) => {
