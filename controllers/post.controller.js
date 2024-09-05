@@ -64,7 +64,14 @@ export const getPosts = async (req, res) => {
                     select: {
                         id: true,
                         reactionType: true,
-                        authorId: true
+                        authorId: true,
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image: true
+                            }
+                        }
                     }
                 }
             },
@@ -75,18 +82,23 @@ export const getPosts = async (req, res) => {
 
         const newFormattedPost = posts.map(post => {
             const reactionCount = {
-                LIKE: 0,
-                LOVE: 0,
-                HAHA: 0,
-                SAD: 0,
-                ANGRY: 0
+                ALL: post._count.likes,
+                LIKE: [],
+                LOVE: [],
+                HAHA: [],
+                SAD: [],
+                ANGRY: []
             };
             
             let userReactonType = null;
 
             post.likes.forEach(like => {
                 if (reactionCount.hasOwnProperty(like.reactionType)) {
-                    reactionCount[like.reactionType]++;
+                    reactionCount[like.reactionType].push({
+                        id: like.author.id,
+                        name: like.author.name,
+                        image: like.author.image
+                    });
                 }
 
                 if (like.authorId === authorId) {
@@ -112,7 +124,7 @@ export const getPosts = async (req, res) => {
                     createdAt: comment.createdAt,
                     updatedAt: comment.updatedAt
                 }))
-            }
+            };
         });
 
         res.json({data: newFormattedPost});

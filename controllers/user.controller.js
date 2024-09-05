@@ -211,7 +211,7 @@ export const updateUser = async (req, res) => {
                     imagePath = await uploadFile(req.files.image);
                     console.log("Image path recevied;", imagePath);
                 } catch (uploadError) {
-                    console.error("Error uploading file:", uploadErro);
+                    console.error("Error uploading file:", uploadError); 
                     return res.status(500).json({ error: "Failed to upload image." });
                 }
             } else {

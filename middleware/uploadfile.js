@@ -63,7 +63,7 @@ export const getFile = (req, res) => {
         if (error) {
             return res.status(404).send("File not found");
         }
-        res.sendFile(filePath);
+        res.sendFile(filePath);  
     })
 };
 
