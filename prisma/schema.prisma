@@ -26,6 +26,8 @@ model User {
 
   CreatedAt   DateTime @default(now())
   UpdatedAt   DateTime @updatedAt @default(now())
+  followers   Follow [] @relation("Following")
+  following   Follow [] @relation("Follower")
 }
 
 model Post {
@@ -73,4 +75,14 @@ model Like {
   updatedAt     DateTime @updatedAt
 
   @@unique([authorId,postId])
+}
+
+model Follow {
+  id           Int    @id @default(autoincrement())
+  followerId   Int
+  follower     User   @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId  Int
+  following    User   @relation("Following", fields: [followingId ], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
 }

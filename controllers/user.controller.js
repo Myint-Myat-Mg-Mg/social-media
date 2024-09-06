@@ -67,6 +67,8 @@ export const getSingleUser = async (req, res) => {
         const user = await prisma.user.findUnique({
             where: { id: Number(id) },
             include: {
+                followers: true,
+                following: true,
                 posts: {
                     include: {
                         comments: {
@@ -104,6 +106,8 @@ export const getSingleUser = async (req, res) => {
                 bio: user.bio,
                 createdAt: user.CreatedAt,
                 updatedAt: user.UpdatedAt,
+                followerCount: user.followers.length,
+                followingCount: user.following.length,
                 posts: user.posts.map(post => ({
                     id: post.id,
                     title: post.title,

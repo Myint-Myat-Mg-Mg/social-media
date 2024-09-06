@@ -49,6 +49,7 @@ export const getPosts = async (req, res) => {
                 comments: {
                     select: {
                         id: true,
+                        parentId: true,
                         content: true,
                         authorId: true,
                         author: {
@@ -128,6 +129,7 @@ export const getPosts = async (req, res) => {
                 userReactonType: userReactonType,
                 comments: post.comments.map(comment => ({
                     id: comment.id,
+                    parentId: comment.parentId,
                     content: comment.content,
                     authorName: comment.author.name,
                     createdAt: comment.createdAt,
