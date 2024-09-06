@@ -82,7 +82,10 @@ export const getPosts = async (req, res) => {
 
         const newFormattedPost = posts.map(post => {
             const reactionCount = {
-                ALL: post._count.likes,
+                ALL: {
+                    count: post._count.likes,
+                    users: []
+                },
                 LIKE: [],
                 LOVE: [],
                 HAHA: [],
@@ -101,6 +104,12 @@ export const getPosts = async (req, res) => {
                     });
                 }
 
+                reactionCount.ALL.users.push({
+                    id: like.author.id,
+                    name: like.author.name,
+                    image: like.author.image
+                });
+
                 if (like.authorId === authorId) {
                     userReactonType = like.reactionType;
                 }
@@ -114,7 +123,7 @@ export const getPosts = async (req, res) => {
                 image: post.image,
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
-                reactionCount: post._count.likes,
+                reactionCount: reactionCount.ALL.count,
                 reactions: reactionCount,
                 userReactonType: userReactonType,
                 comments: post.comments.map(comment => ({
