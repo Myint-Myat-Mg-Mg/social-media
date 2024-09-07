@@ -51,14 +51,17 @@ export const getPosts = async (req, res) => {
                         id: true,
                         parentId: true,
                         content: true,
-                        authorId: true,
                         author: {
                             select: {
-                                name: true
+                                id: true,
+                                name: true,
+                                image: true,
+
                             }
                         },
                         createdAt: true,
-                        updatedAt: true
+                        updatedAt: true,
+
                     }
                 },
                 likes: {
@@ -90,8 +93,7 @@ export const getPosts = async (req, res) => {
                 LIKE: [],
                 LOVE: [],
                 HAHA: [],
-                SAD: [],
-                ANGRY: []
+                WOW: [],
             };
             
             let userReactonType = null;
@@ -131,9 +133,26 @@ export const getPosts = async (req, res) => {
                     id: comment.id,
                     parentId: comment.parentId,
                     content: comment.content,
-                    authorName: comment.author.name,
+                    author: {
+                        id: comment.author.id,
+                        name: comment.author.name,
+                        image: comment.author.image
+                    },
                     createdAt: comment.createdAt,
-                    updatedAt: comment.updatedAt
+                    updatedAt: comment.updatedAt,
+                    commentReplied: post.comments
+                        .filter(child => child.parentId === comment.id)
+                        .map(reply => ({
+                            id: reply.id,
+                            content: reply.content,
+                            author: {
+                                id: reply.author.id,
+                                name: reply.author.name,
+                                image: reply.author.image
+                            },
+                            createdAt: reply.createdAt,
+                            updatedAt: reply.updatedAt
+                        }))
                 }))
             };
         });
