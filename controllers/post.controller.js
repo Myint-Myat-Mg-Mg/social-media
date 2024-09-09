@@ -92,15 +92,17 @@ export const getPosts = async (req, res) => {
                 like: [],
                 love: [],
                 haha: [],
-                wow: [],
+                sad: [],
                 angry: []
             };
             
             let userReactonType = null;
 
             post.likes.forEach(like => {
-                if (reactionCount.hasOwnProperty(like.reactionType)) {
-                    reactionCount[like.reactionType].push({
+                const reactionType = like.reactionType.toLowerCase();
+
+                if (reactionCount.hasOwnProperty(reactionType)) {
+                    reactionCount[reactionType].push({
                         id: like.author.id,
                         name: like.author.name,
                         image: like.author.image
@@ -114,7 +116,7 @@ export const getPosts = async (req, res) => {
                 });
 
                 if (like.authorId === authorId) {
-                    userReactonType = like.reactionType;
+                    userReactonType = reactionType;
                 }
             });
 
