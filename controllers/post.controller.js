@@ -171,7 +171,6 @@ export const getPosts = async (req, res) => {
     }
 };
 
-
 export const getSinglePost = async (req, res) => {
     const {id} = req.params;
     try {
@@ -190,11 +189,27 @@ export const getSinglePost = async (req, res) => {
                         authorId: true,
                         author: {
                             select: {
-                                name: true
+                                id: true,
+                                name: true,
+                                image: true
                             }
                         },
                         createdAt: true,
                         updatedAt: true
+                    }
+                },
+                likes: {
+                    select: {
+                        id: true,
+                        reactionType: true,
+                        authorId: true,
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image: true
+                            }
+                        }
                     }
                 }
             }

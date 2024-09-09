@@ -55,22 +55,48 @@ export const validateUser = async (req, res) => {
             include: {
                 posts: {
                     include: {
+                        author: {
+                            select: {
+                                id: true,
+                                name: true
+                            }
+                        },
                         comments: {
                             select: {
                                 id: true,
+                                parentId: true,
                                 content: true,
                                 author: {
                                     select: {
-                                        name: true
+                                        id: true,
+                                        name: true,
+                                        image: true
                                     }
                                 },
                                 createdAt: true,
                                 updatedAt: true
                             }
                         },
+                        likes: {
+                            select: {
+                                id: true,
+                                reactionType: true,
+                                authorId: true,
+                                author: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        image: true
+                                    }
+                                }
+                            }
+                        },
                         _count: {
                             select: { likes: true }
                         }
+                    },
+                    orderBy: {
+                        UpdatedAt: "desc"
                     }
                 }
             }
@@ -88,22 +114,85 @@ export const validateUser = async (req, res) => {
             bio: user.bio,
             createdAt: user.CreatedAt,
             updatedAt: user.UpdatedAt,
-            posts: user.posts.map(post => ({
-                id: post.id,
-                title: post.title,
-                content: post.content,
-                image: post.image,
-                createdAt: post.CreatedAt,
-                updatedAt: post.UpdatedAt,
-                reactionCount: post._count.likes,
-                comments: post.comments.map(comment => ({
-                    id: comment.id,
-                    content: comment.content,
-                    authorName: comment.author.name,
-                    createdAt: comment.createdAt,
-                    updatedAt: comment.updatedAt
-                }))
-            }))
+            posts: user.posts.map(post => {
+                const reactionCount = {
+                    all: {
+                        users: []
+                    },
+                    like: [],
+                    love: [],
+                    haha: [],
+                    sad: [],
+                    angry: []
+                };
+                
+                let userReactonType = null;
+    
+                post.likes.forEach(like => {
+                    const reactionType = like.reactionType.toLowerCase();
+    
+                    if (reactionCount.hasOwnProperty(reactionType)) {
+                        reactionCount[reactionType].push({
+                            id: like.author.id,
+                            name: like.author.name,
+                            image: like.author.image
+                        });
+                    }
+    
+                    reactionCount.all.users.push({
+                        id: like.author.id,
+                        name: like.author.name,
+                        image: like.author.image
+                    });
+    
+                    if (like.authorId === authorId) {
+                        userReactonType = reactionType;
+                    }
+                });
+    
+                const commentsMap = {};
+                post.comments.forEach(comment => {
+                    commentsMap[comment.id] = {
+                        id: comment.id,
+                        parentId: comment.parentId,
+                        content: comment.content,
+                        author: {
+                            id: comment.author.id,
+                            name: comment.author.name,
+                            image: comment.author.image
+                        },
+                        createdAt: comment.createdAt,
+                        updatedAt: comment.updatedAt,
+                        commentReplied: []
+                    };
+                });
+    
+                const topLevelComments = [];
+                post.comments.forEach(comment => {
+                    if (comment.parentId) {
+                        if (commentsMap[comment.parentId]) {
+                            commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
+                        }
+                    } else {
+                        topLevelComments.push(commentsMap[comment.id]);
+                    }
+                });
+    
+                return {
+                    id: post.id,
+                    title: post.title,
+                    content: post.content,
+                    authorId: post.author.id,
+                    authorName: post.author.name,
+                    image: post.image,
+                    createdAt: post.CreatedAt,
+                    updatedAt: post.UpdatedAt,
+                    reactionCount: reactionCount.all.count,
+                    reactions: reactionCount,
+                    userReactonType: userReactonType,
+                    comments: topLevelComments
+                };
+            })
         };
 
         res.status(200).json(newFormattedUser);
