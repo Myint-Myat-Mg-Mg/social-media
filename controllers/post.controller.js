@@ -86,14 +86,14 @@ export const getPosts = async (req, res) => {
 
         const newFormattedPost = posts.map(post => {
             const reactionCount = {
-                ALL: {
-                    count: post._count.likes,
+                all: {
                     users: []
                 },
-                LIKE: [],
-                LOVE: [],
-                HAHA: [],
-                WOW: [],
+                like: [],
+                love: [],
+                haha: [],
+                wow: [],
+                angry: []
             };
             
             let userReactonType = null;
@@ -107,7 +107,7 @@ export const getPosts = async (req, res) => {
                     });
                 }
 
-                reactionCount.ALL.users.push({
+                reactionCount.all.users.push({
                     id: like.author.id,
                     name: like.author.name,
                     image: like.author.image
@@ -117,19 +117,10 @@ export const getPosts = async (req, res) => {
                     userReactonType = like.reactionType;
                 }
             });
-            return {
-                id: post.id,
-                title: post.title,
-                content: post.content,
-                authorId: post.author.id,
-                authorName: post.author.name,
-                image: post.image,
-                createdAt: post.CreatedAt,
-                updatedAt: post.UpdatedAt,
-                reactionCount: reactionCount.ALL.count,
-                reactions: reactionCount,
-                userReactonType: userReactonType,
-                comments: post.comments.map(comment => ({
+
+            const commentsMap = {};
+            post.comments.forEach(comment => {
+                commentsMap[comment.id] = {
                     id: comment.id,
                     parentId: comment.parentId,
                     content: comment.content,
@@ -140,20 +131,34 @@ export const getPosts = async (req, res) => {
                     },
                     createdAt: comment.createdAt,
                     updatedAt: comment.updatedAt,
-                    commentReplied: post.comments
-                        .filter(child => child.parentId === comment.id)
-                        .map(reply => ({
-                            id: reply.id,
-                            content: reply.content,
-                            author: {
-                                id: reply.author.id,
-                                name: reply.author.name,
-                                image: reply.author.image
-                            },
-                            createdAt: reply.createdAt,
-                            updatedAt: reply.updatedAt
-                        }))
-                }))
+                    commentReplied: []
+                };
+            });
+
+            const topLevelComments = [];
+            post.comments.forEach(comment => {
+                if (comment.parentId) {
+                    if (commentsMap[comment.parentId]) {
+                        commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
+                    }
+                } else {
+                    topLevelComments.push(commentsMap[comment.id]);
+                }
+            });
+
+            return {
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                authorId: post.author.id,
+                authorName: post.author.name,
+                image: post.image,
+                createdAt: post.CreatedAt,
+                updatedAt: post.UpdatedAt,
+                reactionCount: reactionCount.all.count,
+                reactions: reactionCount,
+                userReactonType: userReactonType,
+                comments: topLevelComments
             };
         });
 
@@ -163,6 +168,7 @@ export const getPosts = async (req, res) => {
         res.status(500).json({ error: "An error occurred while fetching posts." });
     }
 };
+
 
 export const getSinglePost = async (req, res) => {
     const {id} = req.params;
