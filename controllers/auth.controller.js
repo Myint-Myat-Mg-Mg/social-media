@@ -59,7 +59,8 @@ export const validateUser = async (req, res) => {
                         author: {
                             select: {
                                 id: true,
-                                name: true
+                                name: true,
+                                image: true
                             }
                         },
                         comments: {
@@ -99,6 +100,51 @@ export const validateUser = async (req, res) => {
                     orderBy: {
                         UpdatedAt: "desc"
                     }
+                },
+                likes: {
+                    include: {
+                        post: {
+                            include: {
+                                author: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        image: true
+                                    }
+                                },
+                                comments: {
+                                    select: {
+                                        id: true,
+                                        parentId: true,
+                                        content: true,
+                                        author: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                image: true
+                                            }
+                                        },
+                                        createdAt: true,
+                                        updatedAt: true
+                                    }
+                                },
+                                likes: {
+                                    select: {
+                                        id: true,
+                                        reactionType: true,
+                                        authorId: true,
+                                        author: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                image: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -107,16 +153,10 @@ export const validateUser = async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const newFormattedUser = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            image: user.image,
-            bio: user.bio,
-            createdAt: user.CreatedAt,
-            updatedAt: user.UpdatedAt,
-            posts: user.posts.map(post => {
-                const reactionCount = {
+        const reactedPosts = user.likes.map(like => {
+            const post = like.post;
+
+            const reactionCount = {
                     all: {
                         users: []
                     },
@@ -127,9 +167,10 @@ export const validateUser = async (req, res) => {
                     angry: []
                 };
                 
-                let userReactonType = null;
+                
+            let userReactonType = null;
     
-                post.likes.forEach(like => {
+            post.likes.forEach(like => {
                     const reactionType = like.reactionType.toLowerCase();
     
                     if (reactionCount.hasOwnProperty(reactionType)) {
@@ -145,7 +186,7 @@ export const validateUser = async (req, res) => {
                         name: like.author.name,
                         image: like.author.image
                     });
-    
+
                     if (like.authorId === authorId) {
                         userReactonType = reactionType;
                     }
@@ -183,18 +224,113 @@ export const validateUser = async (req, res) => {
                     id: post.id,
                     title: post.title,
                     content: post.content,
-                    authorId: post.author.id,
-                    authorName: post.author.name,
                     image: post.image,
+                    author: {
+                        id: post.author.id,
+                        name: post.author.name,
+                        image: post.author.image
+                    },
                     createdAt: post.CreatedAt,
                     updatedAt: post.UpdatedAt,
-                    reactionCount: reactionCount.all.count,
+                    reactionCount: reactionCount.all.users.length,
                     reactions: reactionCount,
                     userReactonType: userReactonType,
                     comments: topLevelComments
                 };
-            })
-        };
+            });
+
+            const newFormattedUser = {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                image: user.image,
+                bio: user.bio,
+                createdAt: user.CreatedAt,
+                updatedAt: user.UpdatedAt,
+                posts: user.posts.map(post => {
+                    const reactionCount = {
+                        all: {
+                            users: []
+                        },
+                        like: [],
+                        love: [],
+                        haha: [],
+                        sad: [],
+                        angry: []
+                    };
+    
+                    let userReactonType = null;
+    
+                    post.likes.forEach(like => {
+                        const reactionType = like.reactionType.toLowerCase();
+    
+                        if (reactionCount.hasOwnProperty(reactionType)) {
+                            reactionCount[reactionType].push({
+                                id: like.author.id,
+                                name: like.author.name,
+                                image: like.author.image
+                            });
+                        }
+    
+                        reactionCount.all.users.push({
+                            id: like.author.id,
+                            name: like.author.name,
+                            image: like.author.image
+                        });
+    
+                        if (like.authorId === authorId) {
+                            userReactonType = reactionType;
+                        }
+                    });
+    
+                    const commentsMap = {};
+                    post.comments.forEach(comment => {
+                        commentsMap[comment.id] = {
+                            id: comment.id,
+                            parentId: comment.parentId,
+                            content: comment.content,
+                            author: {
+                                id: comment.author.id,
+                                name: comment.author.name,
+                                image: comment.author.image
+                            },
+                            createdAt: comment.createdAt,
+                            updatedAt: comment.updatedAt,
+                            commentReplied: []
+                        };
+                    });
+    
+                    const topLevelComments = [];
+                    post.comments.forEach(comment => {
+                        if (comment.parentId) {
+                            if (commentsMap[comment.parentId]) {
+                                commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
+                            }
+                        } else {
+                            topLevelComments.push(commentsMap[comment.id]);
+                        }
+                    });
+    
+                    return {
+                        id: post.id,
+                        title: post.title,
+                        content: post.content,
+                        image: post.image,
+                        author: {
+                            id: post.author.id,
+                            name: post.author.name,
+                            image: post.author.image
+                        },
+                        createdAt: post.createdAt,
+                        updatedAt: post.updatedAt,
+                        reactionCount: reactionCount.all.users.length,
+                        reactions: reactionCount,
+                        userReactonType: userReactonType,
+                        comments: topLevelComments
+                    };
+                }),
+                reactedPosts
+            };
 
         res.status(200).json(newFormattedUser);
     } catch (error) {
@@ -224,7 +360,6 @@ const userLogin = async (req, res) => {
         try {
             if(!user || !(await bcrypt.compare(password, user.password))) {
                 return res.status(401).json({error: "Invalid email or passsword"});
-    
             }
     
             const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET);

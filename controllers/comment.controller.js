@@ -4,8 +4,64 @@ const prisma = new PrismaClient();
 
 export const getComments = async (req, res) => {
     try {
-        const comments = await prisma.comment.findMany();
-        res.json(comments);
+        const comments = await prisma.comment.findMany({
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        image: true
+                    }
+                }
+            }
+        });
+
+        const commentsMap = {};
+
+        comments.forEach(comment => {
+            commentsMap[comment.id] = {
+                id: comment.id,
+                content: comment.content,
+                postId: comment.postId,
+                author: comment.author ? {
+                    id: comment.author.id,
+                    name: comment.author.name,
+                    image: comment.author.image
+                } : null,
+                parentId: comment.parentId,
+                createdAt: comment.createdAt,
+                updatedAt: comment.updatedAt,
+                commentReplied: []
+            };
+        });
+
+        const topLevelComments = [];
+
+        comments.forEach(comment => {
+            if (comment.parentId) {
+                if (commentsMap[comment.parentId]) {
+                    commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
+                }
+            } else {
+                topLevelComments.push(commentsMap[comment.id]);
+            }
+        });
+
+        // const formattedComments = comments.map(comment => ({
+        //     id: comment.id,
+        //     content: comment.content,
+        //     postId: comment.postId,
+        //     author: comment.author ? {
+        //         id: comment.author.id,
+        //         name: comment.author.name,
+        //         image: comment.author.image
+        //     } : null,
+        //     parentId: comment.parentId,
+        //     createdAt: comment.createdAt,
+        //     updatedAt: comment.updatedAt
+        // }));
+
+        res.json(topLevelComments);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -15,7 +71,12 @@ export const getSingleComment = async (req, res) => {
     const {id} = req.params;
     try {
         const comment = await prisma.comment.findUnique({
-            where: { id: Number(id) }
+            where: { id: Number(id) },
+            include: {
+                author: {
+                    
+                }
+            }
         });
         if (!comment) {
             res.status(404).json({ error: "Comment not found" });

@@ -137,6 +137,7 @@ export const createUser = async (req, res) => {
     try {
         const { name, email, password, bio } = req.body;
         let imagePath = null;
+        const defaultAvatarPath = "/path/to/default/avatar.png";
 
         if (req.files && req.files.image) {
             try {
@@ -147,6 +148,7 @@ export const createUser = async (req, res) => {
                 return res.status(500).json({ error: "Failed to upload image." });
             }
         } else {
+            imagePath = defaultAvatarPath;
             console.log("No image found in request");
         }
 
