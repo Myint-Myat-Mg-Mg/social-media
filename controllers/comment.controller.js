@@ -74,18 +74,66 @@ export const getSingleComment = async (req, res) => {
             where: { id: Number(id) },
             include: {
                 author: {
-                    
+                    select: {
+                        id: true,
+                        name: true,
+                        image: true
+                    }
                 }
             }
         });
         if (!comment) {
             res.status(404).json({ error: "Comment not found" });
         }
-        res.status(200).json(comment);
+
+        let parentComment = null;
+
+        if (comment.parentId) {
+            parentComment = await prisma.comment.findUnique({
+                where: { id: comment.parentId },
+                include: {
+                    author: {
+                        select: {
+                            id: true,
+                            name: true,
+                            image: true
+                        }
+                    }
+                }
+            });
+        }
+
+        const formattedComment = {
+            id: comment.id,
+            content: comment.content,
+            postId: comment.postId,
+            parentId: comment.parentId,
+            createdAt: comment.createdAt,
+            updatedAt: comment.updatedAt,
+            author: {
+                id: comment.author.id,
+                name: comment.author.name,
+                image: comment.author.image
+            },
+            commentReplied: parentComment ? {
+                id: parentComment.id,
+                content: parentComment.content,
+                postId: parentComment.postId,
+                createdAt: parentComment.createdAt,
+                updatedAt: parentComment.updatedAt,
+                author: {
+                    id: parentComment.author.id,
+                    name: parentComment.author.name,
+                    image: parentComment.author.image
+                }
+            } : null
+        };
+
+        res.status(200).json(formattedComment);
     } catch (error) {
         res.status(500).json({error: error.message });
     }
-}
+};
 
 export const createComment = async (req, res) => {
     const { postId, content, parentId } = req.body;

@@ -17,9 +17,9 @@ export const uploadFile = async (file) => {
             console.log("Upload directory created at:", uploadDir);
         }
 
-        const fileExtension = path.extname(file.name).slice(1);
+        const fileExtension = path.extname(file.name).toLowerCase();
 
-        const fileName = `${Date.now()}.${fileExtension}`;
+        const fileName = `${Date.now()}${fileExtension}`;
         const filePath = join(uploadDir, fileName);
 
         await file.mv(filePath);
@@ -59,6 +59,7 @@ export const uploadFile = async (file) => {
 
 export const getFile = (req, res) => {
     const filePath = path.join(__dirname, "../uploads", req.params.filename);
+
     fs.access(filePath, fs.constants.F_OK, (error) => {
         if (error) {
             return res.status(404).send("File not found");
