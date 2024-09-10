@@ -42,6 +42,7 @@ export const generateToken = (userName, id) => {
 // };
 export const validateUser = async (req, res) => {
     const token = req.header("Authorization")?.split(" ")[1];
+    const authorId = req.user.id;
 
     if (!token) {
         return res.status(401).json({ error: "Access Denied" });
