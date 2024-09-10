@@ -43,7 +43,8 @@ export const getPosts = async (req, res) => {
                 author: {
                     select: {
                         id: true,
-                        name: true
+                        name: true,
+                        image: true,
                     }
                 },
                 comments: {
@@ -152,9 +153,12 @@ export const getPosts = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                authorId: post.author.id,
-                authorName: post.author.name,
                 image: post.image,
+                author: {
+                    id: post.author.id,
+                    name: post.author.name,
+                    image: post.author.image
+                },
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
                 reactionCount: reactionCount.all.count,
@@ -187,7 +191,8 @@ export const getSinglePost = async (req, res) => {
                 author: {
                     select: {
                         id: true,
-                        name: true
+                        name: true,
+                        image: true
                     }
                 },
                 comments: {
@@ -294,9 +299,12 @@ export const getSinglePost = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                authorId: post.author.id,
-                authorName: post.author.name,
                 image: post.image,
+                author: {
+                    id: post.author.id,
+                    name: post.author.name,
+                    image: post.author.image
+                },
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
                 reactionCount: reactionCount.all.users.length,
