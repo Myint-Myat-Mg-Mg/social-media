@@ -155,7 +155,8 @@ export const validateUser = async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const reactedPosts = user.likes.map(like => {
+        const reactedPosts = user.likes.filter(like => like.post.author.id !== authorId)
+        .map(like => {
             const post = like.post;
 
             const reactionCount = {
