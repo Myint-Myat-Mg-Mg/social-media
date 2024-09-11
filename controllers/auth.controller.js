@@ -76,7 +76,8 @@ export const validateUser = async (req, res) => {
                                     }
                                 },
                                 createdAt: true,
-                                updatedAt: true
+                                updatedAt: true,
+                                isEdited: true
                             }
                         },
                         likes: {
@@ -125,7 +126,8 @@ export const validateUser = async (req, res) => {
                                             }
                                         },
                                         createdAt: true,
-                                        updatedAt: true
+                                        updatedAt: true,
+                                        isEdited: true
                                     }
                                 },
                                 likes: {
@@ -205,6 +207,7 @@ export const validateUser = async (req, res) => {
                         },
                         createdAt: comment.createdAt,
                         updatedAt: comment.updatedAt,
+                        isEdited: comment.isEdited,
                         commentReplied: []
                     };
                 });
@@ -232,6 +235,7 @@ export const validateUser = async (req, res) => {
                     },
                     createdAt: post.CreatedAt,
                     updatedAt: post.UpdatedAt,
+                    isEdited: post.isEdited,
                     reactionCount: reactionCount.all.users.length,
                     reactions: reactionCount,
                     userReactonType: userReactonType,
@@ -296,6 +300,7 @@ export const validateUser = async (req, res) => {
                             },
                             createdAt: comment.createdAt,
                             updatedAt: comment.updatedAt,
+                            isEdited: comment.isEdited,
                             commentReplied: []
                         };
                     });
@@ -323,6 +328,7 @@ export const validateUser = async (req, res) => {
                         },
                         createdAt: post.createdAt,
                         updatedAt: post.updatedAt,
+                        isEdited: post.isEdited,
                         reactionCount: reactionCount.all.users.length,
                         reactions: reactionCount,
                         userReactonType: userReactonType,

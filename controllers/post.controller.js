@@ -56,14 +56,12 @@ export const getPosts = async (req, res) => {
                             select: {
                                 id: true,
                                 name: true,
-                                image: true,
-
+                                image: true
                             }
                         },
                         createdAt: true,
                         updatedAt: true,
                         isEdited: true
-
                     }
                 },
                 likes: {
