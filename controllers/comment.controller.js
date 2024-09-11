@@ -13,7 +13,7 @@ export const getComments = async (req, res) => {
                         image: true
                     }
                 }
-            }
+            },
         });
 
         const commentsMap = {};
@@ -31,6 +31,7 @@ export const getComments = async (req, res) => {
                 parentId: comment.parentId,
                 createdAt: comment.createdAt,
                 updatedAt: comment.updatedAt,
+                isEdited: comment.isEdited,
                 commentReplied: []
             };
         });
@@ -107,29 +108,37 @@ export const getSingleComment = async (req, res) => {
             id: comment.id,
             content: comment.content,
             postId: comment.postId,
-            parentId: comment.parentId,
-            createdAt: comment.createdAt,
-            updatedAt: comment.updatedAt,
             author: {
                 id: comment.author.id,
                 name: comment.author.name,
                 image: comment.author.image
             },
-            commentReplied: parentComment ? {
+            parentId: comment.parentId,
+            createdAt: comment.createdAt,
+            updatedAt: comment.updatedAt,
+            commentReplied: []
+        };
+
+        if (parentComment) {
+            const formattedParentComment = {
                 id: parentComment.id,
                 content: parentComment.content,
                 postId: parentComment.postId,
+                parentId: parentComment.parentId,
                 createdAt: parentComment.createdAt,
                 updatedAt: parentComment.updatedAt,
                 author: {
                     id: parentComment.author.id,
                     name: parentComment.author.name,
                     image: parentComment.author.image
-                }
-            } : null
-        };
+                },
+                commentReplied: [formattedComment]
+            };
 
-        res.status(200).json(formattedComment);
+            res.status(200).json(formattedParentComment);
+        } else {
+            res.status(200).json(formattedComment);
+        }
     } catch (error) {
         res.status(500).json({error: error.message });
     }
@@ -168,15 +177,24 @@ export const updateComment = async (req, res) => {
     const { postId, content } = req.body;
     const authorId = req.user.id;
     try {
-        const comment = await prisma.comment.update({
-            where: { id: Number(id) },
-            data: { authorId, postId: Number(postId), content }
+        const comment = await prisma.comment.findUnique({
+            where: { id: Number(id) }
         });
 
         if (!comment) {
             res.status(404).json({ error: "Comment not found" });
         }
-        res.status(200).json(comment);
+
+        if (comment.authorId !== authorId) {
+            return res.status(200).json({ error: "You are not authorized to update this comment."});
+        }
+
+        const updateComment = await prisma.comment.update({
+            where: { id: Number(id) },
+            data: { authorId, postId: Number(postId), content, isEdited: true }
+        });
+
+        res.status(200).json(updateComment);
     } catch (error) {
         res.status(500).json({ error: error.message });
     };

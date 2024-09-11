@@ -62,6 +62,7 @@ export const getPosts = async (req, res) => {
                         },
                         createdAt: true,
                         updatedAt: true,
+                        isEdited: true
 
                     }
                 },
@@ -134,6 +135,7 @@ export const getPosts = async (req, res) => {
                     },
                     createdAt: comment.createdAt,
                     updatedAt: comment.updatedAt,
+                    isEdited: comment.isEdited,
                     commentReplied: []
                 };
             });
@@ -161,6 +163,7 @@ export const getPosts = async (req, res) => {
                 },
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
+                isEdited: post.isEdited,
                 reactionCount: reactionCount.all.count,
                 reactions: reactionCount,
                 userReactonType: userReactonType,
@@ -381,7 +384,7 @@ export const updatePost = async (req, res) => {
             }
         }
 
-        const updateData = { title, content };
+        const updateData = { title, content, isEdited: true };
 
         if (imagePath) {
             updateData.image = imagePath;
@@ -397,7 +400,7 @@ export const updatePost = async (req, res) => {
         }
         res.status(200).json(post);
     } catch (error) {
-        res.status(500).josn({ error: error.message });
+        res.status(500).json({ error: error.message });
     };
 };
 
