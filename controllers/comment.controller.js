@@ -116,6 +116,7 @@ export const getSingleComment = async (req, res) => {
             parentId: comment.parentId,
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
+            isEdited: comment.isEdited,
             commentReplied: []
         };
 
@@ -127,6 +128,7 @@ export const getSingleComment = async (req, res) => {
                 parentId: parentComment.parentId,
                 createdAt: parentComment.createdAt,
                 updatedAt: parentComment.updatedAt,
+                isEdited: parentComment.isEdited,
                 author: {
                     id: parentComment.author.id,
                     name: parentComment.author.name,

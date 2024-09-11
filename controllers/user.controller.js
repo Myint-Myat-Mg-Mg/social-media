@@ -74,19 +74,37 @@ export const getSingleUser = async (req, res) => {
                         comments: {
                             select: {
                                 id: true,
+                                parentId: true,
                                 content: true,
                                 author: {
                                     select: {
-                                        name: true
+                                        id: true,
+                                        name: true,
+                                        image: true
                                     }
                                 },
                                 createdAt: true,
-                                updatedAt: true
+                                updatedAt: true,
+                                isEdited: true
                             },
                             
                         },
                         _count: {
                             select: { likes: true }
+                        },
+                        likes: {
+                            select: {
+                                id: true,
+                                reactionType: true,
+                                authorId: true,
+                                author: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        image: true
+                                    }
+                                }
+                            }
                         } 
                     }            
                 }
@@ -97,34 +115,90 @@ export const getSingleUser = async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const newFormattedUser = {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                password: user.password,
-                image: user.image,
-                bio: user.bio,
-                createdAt: user.CreatedAt,
-                updatedAt: user.UpdatedAt,
-                followerCount: user.followers.length,
-                followingCount: user.following.length,
-                posts: user.posts.map(post => ({
-                    id: post.id,
-                    title: post.title,
-                    content: post.content,
-                    image: post.image,
-                    createdAt: post.CreatedAt,
-                    updatedAt: post.UpdatedAt,
-                    reactionCount: post._count.likes,
-                    comments: post.comments.map(comment => ({
-                        id: comment.id,
-                        content: comment.content,
-                        authorName: comment.author.name,
-                        createdAt: comment.createdAt,
-                        updatedAt: comment.updatedAt
-                    }))
-                }))
+        const formattedPosts = user.posts.map(post => {
+            const reactionCount = {
+                all: {
+                    users: []
+                },
+                like: [],
+                love: [],
+                haha: [],
+                sad: [],
+                angry: []
             };
+
+            post.likes.forEach(like => {
+                const reactionType = like.reactionType.toLowerCase();
+                if (reactionCount.hasOwnProperty(reactionType)) {
+                    reactionCount[reactionType].push({
+                        id: like.author.id,
+                        name: like.author.name,
+                        image: like.author.image
+                    });
+                }
+
+                reactionCount.all.users.push({
+                    id: like.author.id,
+                    name: like.author.name,
+                    image: like.author.image
+                });
+            });
+
+            const commentsMap = {};
+            post.comments.forEach(comment => {
+                commentsMap[comment.id] = {
+                    id: comment.id,
+                    parentId: comment.parentId,
+                    content: comment.content,
+                    author: {
+                        id: comment.author.id,
+                        name: comment.author.name,
+                        image: comment.author.image
+                    },
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt,
+                    isEdited: comment.isEdited,
+                    commentReplied: []
+                };
+            });
+
+            const topLevelComments = [];
+            post.comments.forEach(comment => {
+                if (comment.parentId) {
+                    if (commentsMap[comment.parentId]) {
+                        commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
+                    }
+                } else {
+                    topLevelComments.push(commentsMap[comment.id]);
+                }
+            });
+
+            return {
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                image: post.image,
+                createdAt: post.createdAt,
+                updatedAt: post.updatedAt,
+                reactionCount: post._count.likes,
+                reactions: reactionCount,
+                comments: topLevelComments
+            };
+        });
+
+        const newFormattedUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            password: user.password,
+            image: user.image,
+            bio: user.bio,
+            createdAt: user.CreatedAt,
+            updatedAt: user.UpdatedAt,
+            followerCount: user.followers.length,
+            followingCount: user.following.length,
+            posts: formattedPosts
+        };
 
         res.status(200).json(newFormattedUser);
     } catch (error) {
