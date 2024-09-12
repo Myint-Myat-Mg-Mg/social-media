@@ -63,6 +63,7 @@ export const unfollowUser = async (req, res) => {
 
         res.status(200).json({ message: "Successfully unfollowed the user." });
     } catch (error) {
+        console.log(error, "logging error")
         res.status(500).json({ error: "An error occurred while unfollowing the user." });
     }
 };
