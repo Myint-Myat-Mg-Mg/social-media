@@ -13,7 +13,7 @@ export const followUser = async (req, res) => {
     try {
         const existingFollow = await prisma.follow.findUnique({
             where: {
-                followerId_followingId: {
+                followerId_followingId: { 
                     followerId,
                     followingId: Number(followingId)
                 }

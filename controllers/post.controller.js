@@ -202,10 +202,11 @@ export const getFollowerPosts = async (req, res) => {
 
         const followIds = await prisma.user.findFirst({ where:{id:authorId}, select:{following:true} })
         const ids = followIds.following.map((k) => k.followingId)
+        const myId = authorId
         console.log(ids);
 
         const posts = await prisma.post.findMany({
-            where: { ...searchConditions, authorId:{in:ids} },
+            where: { ...searchConditions, authorId:{in:ids || myId} },
             include: {
                 _count: {
                     select: {
