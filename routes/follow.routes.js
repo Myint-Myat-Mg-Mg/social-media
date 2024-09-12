@@ -8,5 +8,9 @@ followRouter.post("/follow", authenticateUser, followUser);
 
 followRouter.post("/unfollow", authenticateUser, unfollowUser);
 
+followRouter.get("/")
+
+followRouter.get("/")
+
 export default followRouter;
 
