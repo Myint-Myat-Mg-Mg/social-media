@@ -67,3 +67,51 @@ export const unfollowUser = async (req, res) => {
         res.status(500).json({ error: "An error occurred while unfollowing the user." });
     }
 };
+
+export const getFollowUsers = async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        const following = await prisma.follow.findMany({
+            where: {
+                followerId: userId
+            },
+            include: {
+                following: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                        bio: true
+                    }
+                }
+            }
+        });
+
+        const followers = await prisma.follow.findMany({
+            where: {
+                followingId: userId
+            },
+            include: {
+                follower: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                        bio: true
+                    }
+                }
+            }
+        });
+
+        const followingUsers = following.map(follow => follow.following);
+        const followerUsers = followers.map(follow => follow.follower);
+
+        res.status(200).json({ followingUsers, followerUsers });
+    } catch (error) {
+        console.error("Error fetching follow data:", error);
+        res.status(500).json({ error: "An error occurred while fetching follow data." });
+    }
+};
