@@ -198,7 +198,7 @@ export const getFollowerPosts = async (req, res) => {
                 }
             ]
         }
-        : {};
+        : {}; 
 
         const followIds = await prisma.user.findFirst({ where:{id:authorId}, select:{following:true} })
         const ids = followIds.following.map((k) => k.followingId);

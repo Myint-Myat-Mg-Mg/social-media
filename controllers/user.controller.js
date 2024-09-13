@@ -63,6 +63,8 @@ export const getUsers = async (req, res) => {
 
 export const getSingleUser = async (req, res) => {
     const {id} = req.params;
+    const authorId = req.user.id;
+
     try {
         const user = await prisma.user.findUnique({
             where: { id: Number(id) },
@@ -114,6 +116,8 @@ export const getSingleUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
+
+        const isFollowing = user.followers.some(follower => follower.followerId === authorId);
 
         const formattedPosts = user.posts.map(post => {
             const reactionCount = {
@@ -197,6 +201,7 @@ export const getSingleUser = async (req, res) => {
             updatedAt: user.UpdatedAt,
             followerCount: user.followers.length,
             followingCount: user.following.length,
+            isFollowing,
             posts: formattedPosts
         };
 
