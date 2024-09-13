@@ -43,6 +43,60 @@ export const getUsers = async (req, res) => {
                 email: true,
                 image: true,
                 bio: true,
+                CreatedAt: true,
+                UpdatedAt: true,
+            }
+        });
+        const newFormattedUser = users.map(user => {
+            return {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                image: user.image,
+                bio: user.bio,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
+            }
+        });
+
+        res.json({data: newFormattedUser});
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "An error occurred while searching for users." });
+    }
+};
+
+export const getSuggestUsers = async (req, res) => {
+    const { search } = req.query;
+
+    try {
+        const searchConditions = search
+        ? {
+            OR: [
+                {
+                    name: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                },
+                {
+                    email: {
+                        contains: search,
+                        mode: 'insensitive'
+                    }
+                }
+            ]
+        }
+        : {};
+
+        const users = await prisma.user.findMany({
+            where: searchConditions,
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                bio: true,
             }
         });
         const newFormattedUser = users.map(user => {
@@ -211,6 +265,8 @@ export const getSingleUser = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+
 
 export const createUser = async (req, res) => {
     try {

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUsers, createUser, getSingleUser, updateUser, deleteUser } from "../controllers/user.controller.js";
+import { getUsers, getSuggestUsers, createUser, getSingleUser, updateUser, deleteUser } from "../controllers/user.controller.js";
 import { authenticateUser } from '../middleware/authmiddleware.js';
 
 const userRouter = express.Router();
@@ -131,6 +131,8 @@ const userRouter = express.Router();
  */
 
 userRouter.get("/", authenticateUser, getUsers);
+
+userRouter.get("/suggested", authenticateUser, getSuggestUsers);
 
 userRouter.get("/:id", authenticateUser, getSingleUser);
 
