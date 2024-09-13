@@ -68,6 +68,7 @@ export const getUsers = async (req, res) => {
 
 export const getSuggestUsers = async (req, res) => {
     const { search } = req.query;
+    const authorId = req.user.id;
 
     try {
         const searchConditions = search
@@ -88,6 +89,7 @@ export const getSuggestUsers = async (req, res) => {
             ]
         }
         : {};
+        
 
         const users = await prisma.user.findMany({
             where: searchConditions,
@@ -99,12 +101,25 @@ export const getSuggestUsers = async (req, res) => {
                 bio: true,
             }
         });
+
+        const following = await prisma.follow.findMany({
+            where: {
+                followerId: authorId
+            },
+            select: {
+                followingId: true
+            }
+        });
+
+        const followingIdsSet = new Set(following.map(f => f.followingId));
+        
         const newFormattedUser = users.map(user => {
             return {
                 id: user.id,
                 name: user.name,
                 image: user.image,
-                bio: user.bio
+                bio: user.bio,
+                isFollowing: followingIdsSet.has(user.id)
             }
         });
 
