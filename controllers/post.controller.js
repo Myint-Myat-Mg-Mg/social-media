@@ -37,7 +37,8 @@ export const getPosts = async (req, res) => {
             include: {
                 _count: {
                     select: {
-                        likes: true
+                        likes: true,
+                        shares: true
                     }
                 },
                 author: {
@@ -69,6 +70,18 @@ export const getPosts = async (req, res) => {
                         id: true,
                         reactionType: true,
                         authorId: true,
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image: true
+                            }
+                        }
+                    }
+                },
+                shares: {
+                    select: {
+                        id: true,
                         author: {
                             select: {
                                 id: true,
@@ -149,6 +162,12 @@ export const getPosts = async (req, res) => {
                 }
             });
 
+            const shareUsers = post.shares.map(share => ({
+                id: share.author.id,
+                name: share.author.name,
+                image: share.author.image
+            }));
+
             return {
                 id: post.id,
                 title: post.title,
@@ -165,7 +184,9 @@ export const getPosts = async (req, res) => {
                 reactionCount: reactionCount.all.count,
                 reactions: reactionCount,
                 userReactonType: userReactonType,
-                comments: topLevelComments
+                comments: topLevelComments,
+                shareCount: post._count.shares,
+                shareUsers: shareUsers
             };
         });
 
@@ -359,7 +380,8 @@ export const getSinglePost = async (req, res) => {
             include: {
                 _count: {
                     select: {
-                        likes: true
+                        likes: true,
+                        shares: true
                     }
                 },
                 author: {
@@ -391,6 +413,18 @@ export const getSinglePost = async (req, res) => {
                         id: true,
                         reactionType: true,
                         authorId: true,
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image: true
+                            }
+                        }
+                    }
+                },
+                shares: {
+                    select: {
+                        id: true,
                         author: {
                             select: {
                                 id: true,
@@ -468,6 +502,12 @@ export const getSinglePost = async (req, res) => {
                     topLevelComments.push(commentsMap[comment.id]);
                 }
             });
+
+            const shareUsers = post.shares.map(share => ({
+                id: share.author.id,
+                name: share.author.name,
+                image: share.author.image
+            }));
     
             const newFormattedPost = {
                 id: post.id,
@@ -484,7 +524,9 @@ export const getSinglePost = async (req, res) => {
                 reactionCount: reactionCount.all.users.length,
                 reactions: reactionCount,
                 userReactonType: userReactonType,
-                comments: topLevelComments
+                comments: topLevelComments,
+                shareCount: post._count.shares,
+                shareUsers: shareUsers
             };
         res.status(200).json(newFormattedPost);
     } catch (error) {

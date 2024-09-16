@@ -94,8 +94,20 @@ export const validateUser = async (req, res) => {
                                 }
                             }
                         },
+                        shares: {
+                            select: {
+                                id: true,
+                                author: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        image: true
+                                    }
+                                }
+                            }
+                        },
                         _count: {
-                            select: { likes: true }
+                            select: { likes: true, shares: true }
                         }
                     },
                     orderBy: {
@@ -143,6 +155,21 @@ export const validateUser = async (req, res) => {
                                             }
                                         }
                                     }
+                                },
+                                shares: {
+                                    select: {
+                                        id: true,
+                                        author: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                image: true
+                                            }
+                                        }
+                                    }   
+                                },
+                                _count: {
+                                     select: { likes: true, shares: true }
                                 }
                             }
                         }
@@ -194,6 +221,12 @@ export const validateUser = async (req, res) => {
                         userReactonType = reactionType;
                     }
                 });
+
+                const shareUsers = post.shares.map(share => ({
+                    id: share.author.id,
+                    name: share.author.name,
+                    image: share.author.image
+                }))
     
                 const commentsMap = {};
                 post.comments.forEach(comment => {
@@ -240,7 +273,9 @@ export const validateUser = async (req, res) => {
                     reactionCount: reactionCount.all.users.length,
                     reactions: reactionCount,
                     userReactonType: userReactonType,
-                    comments: topLevelComments
+                    comments: topLevelComments,
+                    shareCount: post._count.shares,
+                    shareUsers: shareUsers
                 };
             });
 
@@ -287,6 +322,12 @@ export const validateUser = async (req, res) => {
                             userReactonType = reactionType;
                         }
                     });
+
+                    const shareUsers = post.shares.map(share => ({
+                        id: share.author.id,
+                        name: share.author.name,
+                        image: share.author.image
+                    }));
     
                     const commentsMap = {};
                     post.comments.forEach(comment => {
@@ -333,7 +374,10 @@ export const validateUser = async (req, res) => {
                         reactionCount: reactionCount.all.users.length,
                         reactions: reactionCount,
                         userReactonType: userReactonType,
-                        comments: topLevelComments
+                        comments: topLevelComments,
+                        shareCount: post._count.shares,
+                        shareUsers: shareUsers
+                        
                     };
                 }),
                 reactedPosts
