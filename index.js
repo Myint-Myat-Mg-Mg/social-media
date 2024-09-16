@@ -5,6 +5,7 @@ import postRouter from "./routes/post.routes.js";
 import commentRouter from "./routes/comment.routes.js";
 import likeRouter from "./routes/like.routes.js";
 import followRouter from "./routes/follow.routes.js";
+import shareRouter from "./routes/share.routes.js";
 import fileUpload from "express-fileupload";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -33,6 +34,7 @@ app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
 app.use("/likes", likeRouter);
 app.use("/follows", followRouter);
+app.use("/shares", shareRouter);
 
 const specs = swaggerJsdoc(options);
 app.use(

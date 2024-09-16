@@ -20,7 +20,8 @@ model User {
   password String
   posts    Post[]     
   comments Comment[]
-  likes    Like[]     
+  likes    Like[]
+  shares   Share[]     
   image    String?
   bio      String?
 
@@ -39,6 +40,7 @@ model Post {
   image       String?
   comments    Comment[]
   likes       Like[]
+  shares      Share[]
   CreatedAt   DateTime @default(now())
   UpdatedAt   DateTime @updatedAt
   isEdited   Boolean @default(false)
@@ -87,4 +89,15 @@ model Follow {
   following    User   @relation("Following", fields: [followingId ], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
+}
+
+model Share {
+  id           Int @id @default(autoincrement())
+  title        String
+  authorId     Int
+  author       User @relation( fields: [authorId], references: [id], onDelete: Cascade )
+  postId       Int
+  post         Post @relation( fields: [postId], references: [id], onDelete: Cascade )
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
