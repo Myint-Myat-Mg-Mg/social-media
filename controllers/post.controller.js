@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { fileURLToPath } from "url";
 import { dirname,join } from "path";
-import uploadFile from "../middleware/uploadfile.js";
+import uploadFile, { uploadFiles } from "../middleware/uploadfile.js";
 
 const prisma = new PrismaClient();
 
@@ -537,22 +537,34 @@ export const getSinglePost = async (req, res) => {
 export const createPost = async (req, res) => {
     try {
         const { title, content } = req.body;
-        let imagePath = null;
+        let imagePaths = [];
 
-        if (req.files && req.files.image) {
+        if (req.files && req.files.images) {
             try {
-                imagePath = await uploadFile(req.files.image);
-                console.log("Image path received:", imagePath);
+                imagePaths = await uploadFiles(req.files.images);
+                console.log("Image paths received:", imagePaths);
             } catch (uploadError) {
-                console.error("Error uploading file:", uploadError);
-                return res.status(500).json({ error: "Failed to upload image." });
+                console.error("Error uploading files:", uploadError);
+                return res.status(500).json({ error: "Failed to upload images." });
             }
         } else {
-            console.log("No image found in request.");
+            console.log("No images found in request.");
         }
 
         const newPost = await prisma.post.create({
-            data: { authorId: req.user.id, title, content, image: imagePath },
+            data: { 
+                authorId: req.user.id, 
+                title, 
+                content, 
+                images: { 
+                    createMany: {
+                        data: imagePaths.map(path => ({ imageUrl: path })) 
+                    } 
+                } 
+            },
+            include: {
+                images: true
+            }
         });
 
         res.json(newPost);
@@ -583,35 +595,71 @@ export const createPost = async (req, res) => {
 export const updatePost = async (req, res) => {
     const { id } = req.params;
     const { title, content } = req.body;
-    let imagePath = null;
+    let newImagePaths = [];
 
     try {
+        const currentPost = await prisma.post.findUnique({
+            where: { id: Number(id) },
+            include: {
+                images: true
+            }
+        })
 
-        if (req.files && req.files.image) {
+        if (!currentPost) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        if (req.files && req.files.images) {
             try {
-                imagePath = await uploadFile(req.files.image);
-                console.log("New image path received:", imagePath);
+                newImagePaths = await uploadFiles(req.files.images);
+                console.log("New image paths received:", newImagePaths);
             } catch (uploadError) {
-                console.log("Error uploading file:", uploadError);
-                return res.status(500).json({ error: "Failed to upload image." });
+                console.log("Error uploading files:", uploadError);
+                return res.status(500).json({ error: "Failed to upload images." });
             }
         }
 
-        const updateData = { title, content, isEdited: true };
+        const updateData = { 
+            title, 
+            content, 
+            isEdited: true 
+        };
 
-        if (imagePath) {
-            updateData.image = imagePath;
+        if (newImagePaths.length > 0) {
+            await prisma.image.deleteMany({
+                where: {
+                    postId: Number(id)
+                }
+            });
+
+            currentPost.images.forEach(image => {
+                const filePath = join(__dirname, "../uploads", path.parse(image.imageUrl).base);
+                fs.unlink(filePath, (error) => {
+                    if (error) {
+                        console.error("Error deleting old image:", error);
+                    } else {
+                        console.log("Old image deleted successfully:", filePath);
+                    }
+                });
+            });
+
+            await prisma.image.createMany({
+                data: newImagePaths.map(path => ({
+                    postId: Number(id),
+                    imageUrl: path
+                }))
+            });
         }
 
-        const post = await prisma.post.update({
+        const updatePost = await prisma.post.update({
             where: { id : Number(id) },
-            data: updateData
+            data: updateData,
+            include: {
+                images: true
+            }
         });
         
-        if (!post) {
-            res.status(404).json({ error: "Post not found" });
-        }
-        res.status(200).json(post);
+        res.status(200).json(updatePost);
     } catch (error) {
         res.status(500).json({ error: error.message });
     };

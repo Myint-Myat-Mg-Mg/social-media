@@ -6,9 +6,7 @@ import { dirname,join } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-//let posts = [];
-
-export const uploadFile = async (file) => {
+export const uploadFiles = async (files) => {
     try {
         const uploadDir = join(__dirname, "../uploads");
 
@@ -17,18 +15,25 @@ export const uploadFile = async (file) => {
             console.log("Upload directory created at:", uploadDir);
         }
 
-        const fileExtension = path.extname(file.name).toLowerCase();
+        const uploadedPaths = [];
+        
+        const filesArray = Array.isArray(files) ? files : [files];
 
-        const fileName = `${Date.now()}${fileExtension}`;
-        const filePath = join(uploadDir, fileName);
+        for (const file of filesArray) {
+            const fileExtension = path.extname(file.name).toLowerCase();
+            const fileName = `${Date.now()}${fileExtension}`;
+            const filePath = join(uploadDir, fileName);
 
-        await file.mv(filePath);
-        console.log("File uploaded to:", filePath);
+            await file.mv(filePath);
+            console.log("File uploaded to:", filePath);
 
-        return `/uploads/${fileName}`;
+            uploadedPaths.push(`/uploads/${fileName}`);
+        }
+
+        return uploadedPaths;
     } catch (error) {
         console.error("Error during file upload:", error);
-        throw error;  
+        throw error;
     }
 }; 
 //     const fileToUpload = req.files.image;
@@ -68,4 +73,4 @@ export const getFile = (req, res) => {
     })
 };
 
-export default uploadFile;
+export default uploadFiles;

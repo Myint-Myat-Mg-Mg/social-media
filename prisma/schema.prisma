@@ -37,13 +37,21 @@ model Post {
   content     String
   authorId    Int
   author      User  @relation( fields: [authorId], references: [id], onDelete: Cascade)
-  image       String?
+  images      Image[]
   comments    Comment[]
   likes       Like[]
   shares      Share[]
   CreatedAt   DateTime @default(now())
   UpdatedAt   DateTime @updatedAt
   isEdited   Boolean @default(false)
+}
+
+model Image {
+  id         Int  @id @default(autoincrement())
+  imageUrl   String
+  postId     Int
+  post       Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 }
 
 model Comment {
