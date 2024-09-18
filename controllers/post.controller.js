@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { fileURLToPath } from "url";
 import { dirname,join } from "path";
+import path from "path";
 import uploadFile, { uploadFiles } from "../middleware/uploadfile.js";
 
 const prisma = new PrismaClient();
