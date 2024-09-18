@@ -91,6 +91,11 @@ export const getPosts = async (req, res) => {
                             }
                         }
                     }
+                },
+                images: {
+                    select: {
+                        imageUrl: true
+                    }
                 }
             },
             orderBy: {
@@ -173,7 +178,7 @@ export const getPosts = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                image: post.image,
+                image: post.images.map(image => image.imageUrl),
                 author: {
                     id: post.author.id,
                     name: post.author.name,
@@ -272,6 +277,11 @@ export const getFollowerPosts = async (req, res) => {
                             }
                         }
                     }
+                },
+                images: {
+                    select: {
+                        imageUrl: true
+                    }
                 }
             },
             orderBy: {
@@ -348,7 +358,7 @@ export const getFollowerPosts = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                image: post.image,
+                image: post.images.map(image => image.imageUrl),
                 author: {
                     id: post.author.id,
                     name: post.author.name,
@@ -434,6 +444,11 @@ export const getSinglePost = async (req, res) => {
                             }
                         }
                     }
+                },
+                images: {
+                    select: {
+                        imageUrl: true
+                    }
                 }
             }
         });
@@ -514,7 +529,7 @@ export const getSinglePost = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                image: post.image,
+                image: post.images.map(image => image.imageUrl),
                 author: {
                     id: post.author.id,
                     name: post.author.name,

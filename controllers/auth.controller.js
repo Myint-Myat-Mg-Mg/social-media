@@ -56,6 +56,11 @@ export const validateUser = async (req, res) => {
             include: {
                 posts: {
                     include: {
+                        images: {
+                            select: {
+                                imageUrl: true
+                            }
+                        },
                         author: {
                             select: {
                                 id: true,
@@ -118,6 +123,11 @@ export const validateUser = async (req, res) => {
                     include: {
                         post: {
                             include: {
+                                images: {
+                                    select: {
+                                        imageUrl: true
+                                    }
+                                },
                                 author: {
                                     select: {
                                         id: true,
@@ -261,7 +271,7 @@ export const validateUser = async (req, res) => {
                     id: post.id,
                     title: post.title,
                     content: post.content,
-                    image: post.image,
+                    image: post.images.map(image => image.imageUrl),
                     author: {
                         id: post.author.id,
                         name: post.author.name,
@@ -362,7 +372,7 @@ export const validateUser = async (req, res) => {
                         id: post.id,
                         title: post.title,
                         content: post.content,
-                        image: post.image,
+                        image: post.images.map(image => image.imageUrl),
                         author: {
                             id: post.author.id,
                             name: post.author.name,
