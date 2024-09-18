@@ -14,7 +14,7 @@ import { dirname,join } from 'path';
 import swaggerUiExpress from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import { options } from "./swagger.js"
-import cron from 'node-cron'
+// import cron from 'node-cron'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
