@@ -178,7 +178,7 @@ export const getPosts = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                image: post.images.map(image => image.imageUrl),
+                images: post.images.map(image => image.imageUrl),
                 author: {
                     id: post.author.id,
                     name: post.author.name,
@@ -358,7 +358,7 @@ export const getFollowerPosts = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                image: post.images.map(image => image.imageUrl),
+                images: post.images.map(image => image.imageUrl),
                 author: {
                     id: post.author.id,
                     name: post.author.name,
@@ -529,7 +529,7 @@ export const getSinglePost = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                image: post.images.map(image => image.imageUrl),
+                images: post.images.map(image => image.imageUrl),
                 author: {
                     id: post.author.id,
                     name: post.author.name,

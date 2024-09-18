@@ -6,6 +6,7 @@ import commentRouter from "./routes/comment.routes.js";
 import likeRouter from "./routes/like.routes.js";
 import followRouter from "./routes/follow.routes.js";
 import shareRouter from "./routes/share.routes.js";
+import storyRouter from "./routes/story.routes.js";
 import fileUpload from "express-fileupload";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -13,12 +14,14 @@ import { dirname,join } from 'path';
 import swaggerUiExpress from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import { options } from "./swagger.js"
+import cron from 'node-cron'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 import cors from "cors";
 import dotenv from 'dotenv';
+//import { cronFunction } from "./utils/cron.js";
 
 dotenv.config();
 
@@ -35,6 +38,7 @@ app.use("/comments", commentRouter);
 app.use("/likes", likeRouter);
 app.use("/follows", followRouter);
 app.use("/shares", shareRouter);
+app.use("/stories", storyRouter);
 
 const specs = swaggerJsdoc(options);
 app.use(
@@ -44,6 +48,10 @@ app.use(
 );
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// cron.schedule('* * * * * *', () => {
+//   cronFunction()
+//  });
 
 app.listen(port, () => 
     console.log(`app is listening on ${port}`));

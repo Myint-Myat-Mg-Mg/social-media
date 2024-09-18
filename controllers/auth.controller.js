@@ -271,7 +271,7 @@ export const validateUser = async (req, res) => {
                     id: post.id,
                     title: post.title,
                     content: post.content,
-                    image: post.images.map(image => image.imageUrl),
+                    images: post.images.map(image => image.imageUrl),
                     author: {
                         id: post.author.id,
                         name: post.author.name,
@@ -372,7 +372,7 @@ export const validateUser = async (req, res) => {
                         id: post.id,
                         title: post.title,
                         content: post.content,
-                        image: post.images.map(image => image.imageUrl),
+                        images: post.images.map(image => image.imageUrl),
                         author: {
                             id: post.author.id,
                             name: post.author.name,
