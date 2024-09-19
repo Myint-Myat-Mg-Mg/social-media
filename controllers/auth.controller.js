@@ -54,6 +54,8 @@ export const validateUser = async (req, res) => {
         const user = await prisma.user.findUnique({
             where: { id: Number(decoded.id) },
             include: {
+                followers: true,
+                following: true,
                 posts: {
                     include: {
                         images: {
@@ -215,6 +217,13 @@ export const validateUser = async (req, res) => {
                                 },
                                 _count: { select: { likes: true, shares: true } }
                             }
+                        },
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image: true
+                            }          
                         }
                     }
                 }
@@ -225,7 +234,7 @@ export const validateUser = async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const formatPost = (post, authorId) => {
+        const formatPost = (post, authorId, shareByUser = null) => {
             const reactionCount = {
                 all: { users: [] },
                 like: [],
@@ -301,6 +310,13 @@ export const validateUser = async (req, res) => {
                     name: post.author.name,
                     image: post.author.image
                 },
+                shareByUser: shareByUser ? {
+                    author: {
+                        id: shareByUser.id,
+                        name: shareByUser.name,
+                        image: shareByUser.image
+                    }
+                } : null,
                 createdAt: post.createdAt,
                 updatedAt: post.updatedAt,
                 isEdited: post.isEdited,
@@ -317,7 +333,11 @@ export const validateUser = async (req, res) => {
             .filter(like => like.post.author.id !== authorId)
             .map(like => formatPost(like.post, authorId));
 
-        const sharedPosts = user.shares.map(share => formatPost(share.post, authorId));
+        const userPosts = user.posts.map(post => formatPost(post, authorId));
+
+        const sharedPosts = user.shares.map(share => formatPost(share.post, authorId, share.author));
+
+        const allPosts = [...userPosts, ...sharedPosts].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
         const newFormattedUser = {
             id: user.id,
@@ -325,11 +345,12 @@ export const validateUser = async (req, res) => {
             email: user.email,
             image: user.image,
             bio: user.bio,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-            posts: user.posts.map(post => formatPost(post, authorId)),
-            reactedPosts,
-            sharedPosts
+            createdAt: user.CreatedAt,
+            updatedAt: user.UpdatedAt,
+            followerCount: user.followers.length,
+            followingCount: user.following.length,
+            posts: allPosts,
+            reactedPosts
         };
 
         res.status(200).json(newFormattedUser);

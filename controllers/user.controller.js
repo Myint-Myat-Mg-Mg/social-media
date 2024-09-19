@@ -142,6 +142,18 @@ export const getSingleUser = async (req, res) => {
                 following: true,
                 posts: {
                     include: {
+                        images: {
+                            select: { 
+                                imageUrl: true
+                            }
+                        },
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image: true
+                            }
+                        },
                         comments: {
                             select: {
                                 id: true,
@@ -157,8 +169,7 @@ export const getSingleUser = async (req, res) => {
                                 createdAt: true,
                                 updatedAt: true,
                                 isEdited: true
-                            },
-                            
+                            }, 
                         },
                         _count: {
                             select: { likes: true }
@@ -176,13 +187,38 @@ export const getSingleUser = async (req, res) => {
                                     }
                                 }
                             }
+                        },
+                        shares: {
+                            select: {
+                                id: true,
+                                author: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        image: true
+                                    }
+                                }
+                            }
                         } 
+                    },
+                    orderBy: {
+                        UpdatedAt: "desc"
                     }            
                 },
                 shares: {
                     include: {
                         post: {
                             include: {
+                                images: {
+                                     select: { imageUrl: true }
+                                },
+                                author: {
+                                     select: {
+                                        id: true,
+                                        name: true,
+                                        image: true
+                                    }
+                                },
                                 comments: {
                                     select: {
                                         id: true,
@@ -201,7 +237,7 @@ export const getSingleUser = async (req, res) => {
                                     }
                                 },
                                 _count: {
-                                    select: { likes: true }
+                                    select: { likes: true, shares: true  }
                                 },
                                 likes: {
                                     select: {
@@ -216,7 +252,26 @@ export const getSingleUser = async (req, res) => {
                                             }
                                         }
                                     }
+                                },
+                                shares: {
+                                    select: {
+                                        id: true,
+                                        author: {
+                                            select: {
+                                                 id: true,
+                                                 name: true,
+                                                 image: true
+                                            }
+                                        }
+                                    }
                                 }
+                            }
+                        },
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image: true
                             }
                         }
                     }
@@ -230,17 +285,17 @@ export const getSingleUser = async (req, res) => {
 
         const isFollowing = user.followers.some(follower => follower.followerId === authorId);
 
-        const formattedPosts = user.posts.map(post => {
+        const formatPost = (post, authorId, shareByUser = null) => {
             const reactionCount = {
-                all: {
-                    users: []
-                },
+                all: { users: [] },
                 like: [],
                 love: [],
                 haha: [],
                 sad: [],
                 angry: []
             };
+
+            let userReactionType = null;
 
             post.likes.forEach(like => {
                 const reactionType = like.reactionType.toLowerCase();
@@ -251,13 +306,21 @@ export const getSingleUser = async (req, res) => {
                         image: like.author.image
                     });
                 }
-
                 reactionCount.all.users.push({
                     id: like.author.id,
                     name: like.author.name,
                     image: like.author.image
                 });
+                if (like.authorId === authorId) {
+                    userReactionType = reactionType;
+                }
             });
+
+            const shareUsers = post.shares.map(share => ({
+                id: share.author.id,
+                name: share.author.name,
+                image: share.author.image
+            }));
 
             const commentsMap = {};
             post.comments.forEach(comment => {
@@ -292,87 +355,36 @@ export const getSingleUser = async (req, res) => {
                 id: post.id,
                 title: post.title,
                 content: post.content,
-                image: post.image,
+                images: post.images.map(image => image.imageUrl),
+                author: {
+                    id: post.author.id,
+                    name: post.author.name,
+                    image: post.author.image
+                },
+                shareByUser: shareByUser ? {
+                    author: {
+                        id: shareByUser.id,
+                        name: shareByUser.name,
+                        image: shareByUser.image
+                    }
+                } : null,
                 createdAt: post.createdAt,
                 updatedAt: post.updatedAt,
-                reactionCount: post._count.likes,
+                isEdited: post.isEdited,
+                reactionCount: reactionCount.all.users.length,
                 reactions: reactionCount,
-                comments: topLevelComments
+                userReactionType: userReactionType,
+                comments: topLevelComments,
+                shareCount: post._count.shares,
+                shareUsers: shareUsers
             };
-        });
+        };
 
-        const sharedPosts = user.shares.map(share => {
-            const sharedPost = share.post;
+        const userPosts = user.posts.map(post => formatPost(post, authorId));
 
-            const reactionCount = {
-                all: {
-                    users: []
-                },
-                like: [],
-                love: [],
-                haha: [],
-                sad: [],
-                angry: []
-            };
+        const sharedPosts = user.shares.map(share => formatPost(share.post, authorId, share.author));
 
-            sharedPost.likes.forEach(like => {
-                const reactionType = like.reactionType.toLowerCase();
-                if (reactionCount.hasOwnProperty(reactionType)) {
-                    reactionCount[reactionType].push({
-                        id: like.author.id,
-                        name: like.author.name,
-                        image: like.author.image
-                    });
-                }
-
-                reactionCount.all.users.push({
-                    id: like.author.id,
-                    name: like.author.name,
-                    image: like.author.image
-                });
-            });
-
-            const commentsMap = {};
-            sharedPost.comments.forEach(comment => {
-                commentsMap[comment.id] = {
-                    id: comment.id,
-                    parentId: comment.parentId,
-                    content: comment.content,
-                    author: {
-                        id: comment.author.id,
-                        name: comment.author.name,
-                        image: comment.author.image
-                    },
-                    createdAt: comment.createdAt,
-                    updatedAt: comment.updatedAt,
-                    isEdited: comment.isEdited,
-                    commentReplied: []
-                };
-            });
-
-            const topLevelComments = [];
-            sharedPost.comments.forEach(comment => {
-                if (comment.parentId) {
-                    if (commentsMap[comment.parentId]) {
-                        commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
-                    }
-                } else {
-                    topLevelComments.push(commentsMap[comment.id]);
-                }
-            });
-
-            return {
-                id: sharedPost.id,
-                title: sharedPost.title,
-                content: sharedPost.content,
-                image: sharedPost.image,
-                createdAt: sharedPost.createdAt,
-                updatedAt: sharedPost.updatedAt,
-                reactionCount: sharedPost._count.likes,
-                reactions: reactionCount,
-                comments: topLevelComments
-            };
-        });
+        const allPosts = [...userPosts, ...sharedPosts].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
         const newFormattedUser = {
             id: user.id,
@@ -386,8 +398,7 @@ export const getSingleUser = async (req, res) => {
             followerCount: user.followers.length,
             followingCount: user.following.length,
             isFollowing,
-            posts: formattedPosts,
-            sharedPosts: sharedPosts
+            posts: allPosts
         };
 
         res.status(200).json(newFormattedUser);
