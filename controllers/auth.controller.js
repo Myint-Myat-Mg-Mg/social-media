@@ -184,6 +184,39 @@ export const validateUser = async (req, res) => {
                             }
                         }
                     }
+                },
+                shares: {
+                    include: {
+                        post: {
+                            include: {
+                                images: { select: { imageUrl: true } },
+                                author: { select: { id: true, name: true, image: true } },
+                                comments: {
+                                    select: {
+                                        id: true,
+                                        parentId: true,
+                                        content: true,
+                                        author: { select: { id: true, name: true, image: true } },
+                                        createdAt: true,
+                                        updatedAt: true,
+                                        isEdited: true
+                                    }
+                                },
+                                likes: {
+                                    select: {
+                                        id: true,
+                                        reactionType: true,
+                                        authorId: true,
+                                        author: { select: { id: true, name: true, image: true } }
+                                    }
+                                },
+                                shares: {
+                                    select: { id: true, author: { select: { id: true, name: true, image: true } } }
+                                },
+                                _count: { select: { likes: true, shares: true } }
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -192,206 +225,112 @@ export const validateUser = async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const reactedPosts = user.likes.filter(like => like.post.author.id !== authorId)
-        .map(like => {
-            const post = like.post;
-
+        const formatPost = (post, authorId) => {
             const reactionCount = {
-                    all: {
-                        users: []
-                    },
-                    like: [],
-                    love: [],
-                    haha: [],
-                    sad: [],
-                    angry: []
-                };
-                
-                
-            let userReactonType = null;
-    
+                all: { users: [] },
+                like: [],
+                love: [],
+                haha: [],
+                sad: [],
+                angry: []
+            };
+
+            let userReactionType = null;
+
             post.likes.forEach(like => {
-                    const reactionType = like.reactionType.toLowerCase();
-    
-                    if (reactionCount.hasOwnProperty(reactionType)) {
-                        reactionCount[reactionType].push({
-                            id: like.author.id,
-                            name: like.author.name,
-                            image: like.author.image
-                        });
-                    }
-    
-                    reactionCount.all.users.push({
+                const reactionType = like.reactionType.toLowerCase();
+                if (reactionCount.hasOwnProperty(reactionType)) {
+                    reactionCount[reactionType].push({
                         id: like.author.id,
                         name: like.author.name,
                         image: like.author.image
                     });
+                }
+                reactionCount.all.users.push({
+                    id: like.author.id,
+                    name: like.author.name,
+                    image: like.author.image
+                });
+                if (like.authorId === authorId) {
+                    userReactionType = reactionType;
+                }
+            });
 
-                    if (like.authorId === authorId) {
-                        userReactonType = reactionType;
-                    }
-                });
+            const shareUsers = post.shares.map(share => ({
+                id: share.author.id,
+                name: share.author.name,
+                image: share.author.image
+            }));
 
-                const shareUsers = post.shares.map(share => ({
-                    id: share.author.id,
-                    name: share.author.name,
-                    image: share.author.image
-                }))
-    
-                const commentsMap = {};
-                post.comments.forEach(comment => {
-                    commentsMap[comment.id] = {
-                        id: comment.id,
-                        parentId: comment.parentId,
-                        content: comment.content,
-                        author: {
-                            id: comment.author.id,
-                            name: comment.author.name,
-                            image: comment.author.image
-                        },
-                        createdAt: comment.createdAt,
-                        updatedAt: comment.updatedAt,
-                        isEdited: comment.isEdited,
-                        commentReplied: []
-                    };
-                });
-    
-                const topLevelComments = [];
-                post.comments.forEach(comment => {
-                    if (comment.parentId) {
-                        if (commentsMap[comment.parentId]) {
-                            commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
-                        }
-                    } else {
-                        topLevelComments.push(commentsMap[comment.id]);
-                    }
-                });
-    
-                return {
-                    id: post.id,
-                    title: post.title,
-                    content: post.content,
-                    images: post.images.map(image => image.imageUrl),
+            const commentsMap = {};
+            post.comments.forEach(comment => {
+                commentsMap[comment.id] = {
+                    id: comment.id,
+                    parentId: comment.parentId,
+                    content: comment.content,
                     author: {
-                        id: post.author.id,
-                        name: post.author.name,
-                        image: post.author.image
+                        id: comment.author.id,
+                        name: comment.author.name,
+                        image: comment.author.image
                     },
-                    createdAt: post.CreatedAt,
-                    updatedAt: post.UpdatedAt,
-                    isEdited: post.isEdited,
-                    reactionCount: reactionCount.all.users.length,
-                    reactions: reactionCount,
-                    userReactonType: userReactonType,
-                    comments: topLevelComments,
-                    shareCount: post._count.shares,
-                    shareUsers: shareUsers
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt,
+                    isEdited: comment.isEdited,
+                    commentReplied: []
                 };
             });
 
-            const newFormattedUser = {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                image: user.image,
-                bio: user.bio,
-                createdAt: user.CreatedAt,
-                updatedAt: user.UpdatedAt,
-                posts: user.posts.map(post => {
-                    const reactionCount = {
-                        all: {
-                            users: []
-                        },
-                        like: [],
-                        love: [],
-                        haha: [],
-                        sad: [],
-                        angry: []
-                    };
-    
-                    let userReactonType = null;
-    
-                    post.likes.forEach(like => {
-                        const reactionType = like.reactionType.toLowerCase();
-    
-                        if (reactionCount.hasOwnProperty(reactionType)) {
-                            reactionCount[reactionType].push({
-                                id: like.author.id,
-                                name: like.author.name,
-                                image: like.author.image
-                            });
-                        }
-    
-                        reactionCount.all.users.push({
-                            id: like.author.id,
-                            name: like.author.name,
-                            image: like.author.image
-                        });
-    
-                        if (like.authorId === authorId) {
-                            userReactonType = reactionType;
-                        }
-                    });
+            const topLevelComments = [];
+            post.comments.forEach(comment => {
+                if (comment.parentId) {
+                    if (commentsMap[comment.parentId]) {
+                        commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
+                    }
+                } else {
+                    topLevelComments.push(commentsMap[comment.id]);
+                }
+            });
 
-                    const shareUsers = post.shares.map(share => ({
-                        id: share.author.id,
-                        name: share.author.name,
-                        image: share.author.image
-                    }));
-    
-                    const commentsMap = {};
-                    post.comments.forEach(comment => {
-                        commentsMap[comment.id] = {
-                            id: comment.id,
-                            parentId: comment.parentId,
-                            content: comment.content,
-                            author: {
-                                id: comment.author.id,
-                                name: comment.author.name,
-                                image: comment.author.image
-                            },
-                            createdAt: comment.createdAt,
-                            updatedAt: comment.updatedAt,
-                            isEdited: comment.isEdited,
-                            commentReplied: []
-                        };
-                    });
-    
-                    const topLevelComments = [];
-                    post.comments.forEach(comment => {
-                        if (comment.parentId) {
-                            if (commentsMap[comment.parentId]) {
-                                commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
-                            }
-                        } else {
-                            topLevelComments.push(commentsMap[comment.id]);
-                        }
-                    });
-    
-                    return {
-                        id: post.id,
-                        title: post.title,
-                        content: post.content,
-                        images: post.images.map(image => image.imageUrl),
-                        author: {
-                            id: post.author.id,
-                            name: post.author.name,
-                            image: post.author.image
-                        },
-                        createdAt: post.createdAt,
-                        updatedAt: post.updatedAt,
-                        isEdited: post.isEdited,
-                        reactionCount: reactionCount.all.users.length,
-                        reactions: reactionCount,
-                        userReactonType: userReactonType,
-                        comments: topLevelComments,
-                        shareCount: post._count.shares,
-                        shareUsers: shareUsers
-                        
-                    };
-                }),
-                reactedPosts
+            return {
+                id: post.id,
+                title: post.title,
+                content: post.content,
+                images: post.images.map(image => image.imageUrl),
+                author: {
+                    id: post.author.id,
+                    name: post.author.name,
+                    image: post.author.image
+                },
+                createdAt: post.createdAt,
+                updatedAt: post.updatedAt,
+                isEdited: post.isEdited,
+                reactionCount: reactionCount.all.users.length,
+                reactions: reactionCount,
+                userReactionType: userReactionType,
+                comments: topLevelComments,
+                shareCount: post._count.shares,
+                shareUsers: shareUsers
             };
+        };
+
+        const reactedPosts = user.likes
+            .filter(like => like.post.author.id !== authorId)
+            .map(like => formatPost(like.post, authorId));
+
+        const sharedPosts = user.shares.map(share => formatPost(share.post, authorId));
+
+        const newFormattedUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            bio: user.bio,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+            posts: user.posts.map(post => formatPost(post, authorId)),
+            reactedPosts,
+            sharedPosts
+        };
 
         res.status(200).json(newFormattedUser);
     } catch (error) {

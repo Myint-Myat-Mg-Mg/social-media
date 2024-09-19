@@ -10,7 +10,9 @@ export const createStory = async (req, res) => {
         let imagePath = null;
 
         if (req.files && req.files.image) {
+            console.log("Received file:", req.files.image);
             imagePath = await uploadFiles(req.files.image);
+            console.log("Uploaded image path:", imagePath);
         }
 
         const expirationTime = new Date();
@@ -78,13 +80,10 @@ export const viewStory = async (req, res) => {
     const viewerId = req.user.id;
 
     try {
-        // Check if the story exists and hasn't expired
         const story = await prisma.story.findUnique({
             where: { id: Number(storyId) },
             include: {
-                views: {
-                    where: { viewerId }
-                }
+                views: true
             }
         });
 
@@ -92,8 +91,9 @@ export const viewStory = async (req, res) => {
             return res.status(404).json({ error: "Story not found or has expired." });
         }
 
-        // If the user hasn't viewed the story, record the view
-        if (!story.views.length) {
+        const hasViewed = story.views.some(view => view.viewerId === viewerId);
+
+        if (!hasViewed) {
             await prisma.storyView.create({
                 data: {
                     storyId: story.id,

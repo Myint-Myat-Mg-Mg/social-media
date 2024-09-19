@@ -30,7 +30,7 @@ export const uploadFiles = async (files) => {
             uploadedPaths.push(`/uploads/${fileName}`);
         }
 
-        return uploadedPaths;
+        return uploadedPaths[0];
     } catch (error) {
         console.error("Error during file upload:", error);
         throw error;

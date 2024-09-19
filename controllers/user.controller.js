@@ -178,6 +178,48 @@ export const getSingleUser = async (req, res) => {
                             }
                         } 
                     }            
+                },
+                shares: {
+                    include: {
+                        post: {
+                            include: {
+                                comments: {
+                                    select: {
+                                        id: true,
+                                        parentId: true,
+                                        content: true,
+                                        author: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                image: true
+                                            }
+                                        },
+                                        createdAt: true,
+                                        updatedAt: true,
+                                        isEdited: true
+                                    }
+                                },
+                                _count: {
+                                    select: { likes: true }
+                                },
+                                likes: {
+                                    select: {
+                                        id: true,
+                                        reactionType: true,
+                                        authorId: true,
+                                        author: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                image: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -259,6 +301,79 @@ export const getSingleUser = async (req, res) => {
             };
         });
 
+        const sharedPosts = user.shares.map(share => {
+            const sharedPost = share.post;
+
+            const reactionCount = {
+                all: {
+                    users: []
+                },
+                like: [],
+                love: [],
+                haha: [],
+                sad: [],
+                angry: []
+            };
+
+            sharedPost.likes.forEach(like => {
+                const reactionType = like.reactionType.toLowerCase();
+                if (reactionCount.hasOwnProperty(reactionType)) {
+                    reactionCount[reactionType].push({
+                        id: like.author.id,
+                        name: like.author.name,
+                        image: like.author.image
+                    });
+                }
+
+                reactionCount.all.users.push({
+                    id: like.author.id,
+                    name: like.author.name,
+                    image: like.author.image
+                });
+            });
+
+            const commentsMap = {};
+            sharedPost.comments.forEach(comment => {
+                commentsMap[comment.id] = {
+                    id: comment.id,
+                    parentId: comment.parentId,
+                    content: comment.content,
+                    author: {
+                        id: comment.author.id,
+                        name: comment.author.name,
+                        image: comment.author.image
+                    },
+                    createdAt: comment.createdAt,
+                    updatedAt: comment.updatedAt,
+                    isEdited: comment.isEdited,
+                    commentReplied: []
+                };
+            });
+
+            const topLevelComments = [];
+            sharedPost.comments.forEach(comment => {
+                if (comment.parentId) {
+                    if (commentsMap[comment.parentId]) {
+                        commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
+                    }
+                } else {
+                    topLevelComments.push(commentsMap[comment.id]);
+                }
+            });
+
+            return {
+                id: sharedPost.id,
+                title: sharedPost.title,
+                content: sharedPost.content,
+                image: sharedPost.image,
+                createdAt: sharedPost.createdAt,
+                updatedAt: sharedPost.updatedAt,
+                reactionCount: sharedPost._count.likes,
+                reactions: reactionCount,
+                comments: topLevelComments
+            };
+        });
+
         const newFormattedUser = {
             id: user.id,
             name: user.name,
@@ -271,7 +386,8 @@ export const getSingleUser = async (req, res) => {
             followerCount: user.followers.length,
             followingCount: user.following.length,
             isFollowing,
-            posts: formattedPosts
+            posts: formattedPosts,
+            sharedPosts: sharedPosts
         };
 
         res.status(200).json(newFormattedUser);
@@ -280,8 +396,6 @@ export const getSingleUser = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
-
 
 export const createUser = async (req, res) => {
     try {
