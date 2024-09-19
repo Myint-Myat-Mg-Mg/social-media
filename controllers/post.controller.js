@@ -174,6 +174,8 @@ export const getPosts = async (req, res) => {
                 image: share.author.image
             }));
 
+            const shareByUser = post.shares.find(share => share.author.id !== post.author.id);
+
             return {
                 id: post.id,
                 title: post.title,
@@ -184,6 +186,13 @@ export const getPosts = async (req, res) => {
                     name: post.author.name,
                     image: post.author.image
                 },
+                shareByUser: shareByUser ? {
+                    author: {
+                        id: shareByUser.author.id,
+                        name: shareByUser.author.name,
+                        image: shareByUser.author.image
+                    }
+                } : null,
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
                 isEdited: post.isEdited,
@@ -227,7 +236,10 @@ export const getFollowerPosts = async (req, res) => {
         }
         : {}; 
 
-        const followIds = await prisma.user.findFirst({ where:{id:authorId}, select:{following:true} })
+        const followIds = await prisma.user.findFirst({ 
+            where:{id:authorId}, 
+            select:{following:true} 
+        })
         const ids = followIds.following.map((k) => k.followingId);
         ids.push(authorId);
         console.log(ids);
@@ -237,7 +249,8 @@ export const getFollowerPosts = async (req, res) => {
             include: {
                 _count: {
                     select: {
-                        likes: true
+                        likes: true,
+                        shares: true
                     }
                 },
                 author: {
@@ -281,6 +294,18 @@ export const getFollowerPosts = async (req, res) => {
                 images: {
                     select: {
                         imageUrl: true
+                    }
+                },
+                shares: {
+                    select: {
+                        id: true,
+                        author: {
+                            select: {
+                                id: true,
+                                name: true,
+                                image: true
+                            }
+                        }
                     }
                 }
             },
@@ -354,6 +379,16 @@ export const getFollowerPosts = async (req, res) => {
                 }
             });
 
+            const shareByUser = post.shares.length
+                ? {
+                    author: {
+                        id: post.shares[0].author.id,
+                        name: post.shares[0].author.name,
+                        image: post.shares[0].author.image
+                    }
+                }
+                : null;
+
             return {
                 id: post.id,
                 title: post.title,
@@ -364,6 +399,7 @@ export const getFollowerPosts = async (req, res) => {
                     name: post.author.name,
                     image: post.author.image
                 },
+                shareByUser: shareByUser,
                 createdAt: post.CreatedAt,
                 updatedAt: post.UpdatedAt,
                 isEdited: post.isEdited,
