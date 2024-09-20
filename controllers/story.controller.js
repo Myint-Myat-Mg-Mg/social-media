@@ -16,7 +16,7 @@ export const createStory = async (req, res) => {
         }
 
         const expirationTime = new Date();
-        expirationTime.setHours(expirationTime.getHours() + 24);
+        expirationTime.setMinutes(expirationTime.getMinutes() + 1);
 
         const newStory = await prisma.story.create({
             data: {
@@ -80,8 +80,13 @@ export const viewStory = async (req, res) => {
     const viewerId = req.user.id;
 
     try {
+        const storyIdNum = parseInt(storyId, 10);
+        if(isNaN(storyIdNum)) {
+            return res.status(400).json({ error: "Invalid story ID." });
+        }
+
         const story = await prisma.story.findUnique({
-            where: { id: Number(storyId) },
+            where: { id: storyIdNum },
             include: {
                 views: true
             }

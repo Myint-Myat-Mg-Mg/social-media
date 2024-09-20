@@ -104,6 +104,7 @@ export const validateUser = async (req, res) => {
                         shares: {
                             select: {
                                 id: true,
+                                title: true,
                                 author: {
                                     select: {
                                         id: true,
@@ -171,6 +172,7 @@ export const validateUser = async (req, res) => {
                                 shares: {
                                     select: {
                                         id: true,
+                                        title: true,
                                         author: {
                                             select: {
                                                 id: true,
@@ -213,7 +215,7 @@ export const validateUser = async (req, res) => {
                                     }
                                 },
                                 shares: {
-                                    select: { id: true, author: { select: { id: true, name: true, image: true } } }
+                                    select: { id: true, title: true, author: { select: { id: true, name: true, image: true } } }
                                 },
                                 _count: { select: { likes: true, shares: true } }
                             }
@@ -311,6 +313,8 @@ export const validateUser = async (req, res) => {
                     image: post.author.image
                 },
                 shareByUser: shareByUser ? {
+                    sharePostId: post.shares[0].id,
+                    sharePostTitle: post.shares[0].title,
                     author: {
                         id: shareByUser.id,
                         name: shareByUser.name,

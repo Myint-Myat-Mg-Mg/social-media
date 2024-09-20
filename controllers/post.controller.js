@@ -2,7 +2,10 @@ import { PrismaClient } from "@prisma/client";
 import { fileURLToPath } from "url";
 import { dirname,join } from "path";
 import path from "path";
+import fs from "fs";
 import uploadFile, { uploadFiles } from "../middleware/uploadfile.js";
+import { sharePost } from "./share.controller.js";
+import shareRouter from "../routes/share.routes.js";
 
 const prisma = new PrismaClient();
 
@@ -83,6 +86,13 @@ export const getPosts = async (req, res) => {
                 shares: {
                     select: {
                         id: true,
+                        title: true,
+                        post: {
+                            select: {
+                                id: true,
+                                title: true,
+                            }
+                        },
                         author: {
                             select: {
                                 id: true,
@@ -174,7 +184,7 @@ export const getPosts = async (req, res) => {
                 image: share.author.image
             }));
 
-            const shareByUser = post.shares.find(share => share.author.id !== post.author.id);
+            const shareByUser = post.shares.find((share) => share.author.id !== post.author.id);
 
             return {
                 id: post.id,
@@ -187,6 +197,8 @@ export const getPosts = async (req, res) => {
                     image: post.author.image
                 },
                 shareByUser: shareByUser ? {
+                    sharePostId: shareByUser.id,
+                    sharePosTitle: shareByUser.title,
                     author: {
                         id: shareByUser.author.id,
                         name: shareByUser.author.name,
@@ -299,6 +311,7 @@ export const getFollowerPosts = async (req, res) => {
                 shares: {
                     select: {
                         id: true,
+                        title: true,
                         author: {
                             select: {
                                 id: true,
@@ -381,6 +394,8 @@ export const getFollowerPosts = async (req, res) => {
 
             const shareByUser = post.shares.length
                 ? {
+                    sharePostId: post.shares[0].id,
+                    sharePostTitle: post.shares[0].title,
                     author: {
                         id: post.shares[0].author.id,
                         name: post.shares[0].author.name,
@@ -591,6 +606,7 @@ export const createPost = async (req, res) => {
         const { title, content } = req.body;
         let imagePaths = [];
 
+
         if (req.files && req.files.images) {
             try {
                 imagePaths = await uploadFiles(req.files.images);
@@ -602,6 +618,8 @@ export const createPost = async (req, res) => {
         } else {
             console.log("No images found in request.");
         }
+
+        console.log(imagePaths, "logging image paths")
 
         const newPost = await prisma.post.create({
             data: { 
