@@ -16,7 +16,7 @@ export const createStory = async (req, res) => {
         }
 
         const expirationTime = new Date();
-        expirationTime.setMinutes(expirationTime.getMinutes() + 1);
+        expirationTime.setHours(expirationTime.getHours() + 24);
 
         const newStory = await prisma.story.create({
             data: {
@@ -43,7 +43,12 @@ export const getStories = async (req, res) => {
                     gt: currentTime,  // Fetch stories that haven't expired
                 },
             },
-            include: {
+            select: {
+                id: true,
+                content: true,
+                image: true,
+                createdAt: true,
+                expiresAt: true,
                 author: {
                     select: {
                         id: true,
@@ -76,15 +81,17 @@ export const getStories = async (req, res) => {
 };
 
 export const viewStory = async (req, res) => {
-    const { storyId } = req.params;
+    const { id : storyId } = req.params;
+    console.log(storyId)
     const viewerId = req.user.id;
+    
 
     try {
         const storyIdNum = parseInt(storyId, 10);
         if(isNaN(storyIdNum)) {
             return res.status(400).json({ error: "Invalid story ID." });
         }
-
+        
         const story = await prisma.story.findUnique({
             where: { id: storyIdNum },
             include: {
@@ -115,7 +122,7 @@ export const viewStory = async (req, res) => {
 };
 
 export const deleteStory = async (req, res) => {
-    const { storyId } = req.params;
+    const { id : storyId } = req.params;
     const authorId = req.user.id;
 
     try {
