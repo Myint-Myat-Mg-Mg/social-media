@@ -36,15 +36,12 @@ export const getComments = async (req, res) => {
             };
         });
 
-        const topLevelComments = [];
-
         comments.forEach(comment => {
             if (comment.parentId) {
                 if (commentsMap[comment.parentId]) {
                     commentsMap[comment.parentId].commentReplied.push(commentsMap[comment.id]);
+                    delete commentsMap[comment.parent.id];
                 }
-            } else {
-                topLevelComments.push(commentsMap[comment.id]);
             }
         });
 
@@ -62,7 +59,7 @@ export const getComments = async (req, res) => {
         //     updatedAt: comment.updatedAt
         // }));
 
-        res.json(topLevelComments);
+        res.json(commentsMap);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

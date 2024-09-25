@@ -73,7 +73,7 @@ export const getStories = async (req, res) => {
             }
         });
 
-        res.status(200).json(stories);
+        res.status(200).json({stories});
     } catch (error) {
         console.error("Error fetching stories:", error);
         res.status(500).json({ error: "Error fetching stories." });

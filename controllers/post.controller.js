@@ -198,7 +198,7 @@ export const getPosts = async (req, res) => {
                 },
                 shareByUser: shareByUser ? {
                     sharePostId: shareByUser.id,
-                    sharePosTitle: shareByUser.title,
+                    sharePostTitle: shareByUser.title,
                     author: {
                         id: shareByUser.author.id,
                         name: shareByUser.author.name,
@@ -392,6 +392,12 @@ export const getFollowerPosts = async (req, res) => {
                 }
             });
 
+            const shareUsers = post.shares.map(share => ({
+                id: share.author.id,
+                name: share.author.name,
+                image: share.author.image
+            }))
+
             const shareByUser = post.shares.length
                 ? {
                     sharePostId: post.shares[0].id,
@@ -421,7 +427,9 @@ export const getFollowerPosts = async (req, res) => {
                 reactionCount: reactionCount.all.count,
                 reactions: reactionCount,
                 userReactonType: userReactonType,
-                comments: topLevelComments
+                comments: topLevelComments,
+                shareCount: post._count.shares,
+                shareUsers: shareUsers
             };
         });
 
