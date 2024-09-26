@@ -7,6 +7,7 @@ import likeRouter from "./routes/like.routes.js";
 import followRouter from "./routes/follow.routes.js";
 import shareRouter from "./routes/share.routes.js";
 import storyRouter from "./routes/story.routes.js";
+import notificationRouter from "./routes/notification.routes.js";
 import fileUpload from "express-fileupload";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -39,6 +40,7 @@ app.use("/likes", likeRouter);
 app.use("/follows", followRouter);
 app.use("/shares", shareRouter);
 app.use("/stories", storyRouter);
+app.use("/notifications", notificationRouter);
 
 const specs = swaggerJsdoc(options);
 app.use(

@@ -26,6 +26,8 @@ model User {
   bio      String?
   stories  Story[]
   views    StoryView[]
+  notificationReceived Notification[] @relation("NotificationReceived")
+  notificationSent Notification[] @relation("NotificationSent")
 
   CreatedAt   DateTime @default(now())
   UpdatedAt   DateTime @updatedAt @default(now())
@@ -66,6 +68,7 @@ model Post {
   CreatedAt   DateTime @default(now())
   UpdatedAt   DateTime @updatedAt
   isEdited   Boolean @default(false)
+  Notifications Notification[]
 }
 
 model Image {
@@ -131,3 +134,20 @@ model Share {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model Notification {
+  id           Int       @id @default(autoincrement())
+  type         String    
+  content      String?   
+  authorId     Int       
+  author       User      @relation("NotificationReceived", fields: [authorId], references: [id], onDelete: Cascade)
+  senderId     Int       
+  sender       User      @relation("NotificationSent", fields: [senderId], references: [id], onDelete: Cascade)
+  postId       Int?      
+  post         Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  isRead       Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+}
+ 
+
+

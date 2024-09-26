@@ -5,13 +5,31 @@ const prisma = new PrismaClient();
 export const addReaction = async (req, res) => {
     const { postId, reactionType }  = req.body;
     const authorId = req.user.id;
-
     const validReaction =  ["LIKE", "LOVE", "HAHA", "SAD", "ANGRY"];
+    
     if (!validReaction.includes(reactionType)) {
         return res.status(400).json({ error: "Invalid reaction type" });
     }
 
     try {
+        const post = await prisma.post.findUnique({
+            where: { id: Number(postId) },
+            select: { authorId: true }
+        });
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        const reactingUser = await prisma.user.findUnique({
+            where: { id: Number(authorId) },
+            select: { name: true }
+        });
+
+        if (!reactingUser || !reactingUser.name) {
+            return res.status(400).json({ error: "User name not found." });
+        }
+
         const existingReaction = await prisma.like.findFirst({
             where: {
                 postId: Number(postId),
@@ -47,9 +65,23 @@ export const addReaction = async (req, res) => {
                 reactionType 
             },             
          });
+
+         if (post.authorId !== authorId) {
+            await prisma.notification.create({
+                data: {
+                    type: "reactions",
+                    content: `${reactingUser.name} reacted to your post with ${reactionType}`,
+                    authorId: post.authorId,
+                    senderId: authorId,
+                    postId: postId
+                }
+            })
+         }
+
          res.status(200).json({ message: `Added ${reactionType} reaction to the post` , reaction: newReaction});
         }
     } catch (error) {
+        console.error("Error adding reaction:", error);
         res.status(500).json({ error: "An error occurred while adding a reaction." });
     };
 };

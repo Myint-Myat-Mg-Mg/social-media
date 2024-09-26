@@ -152,6 +152,15 @@ export const createComment = async (req, res) => {
     }
 
     try {
+        const post = await prisma.post.findUnique({
+            where: { id: Number(postId) },
+            select: { authorId: true }
+        });
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
         if (parentId) {
             const parentComment = await prisma.comment.findUnique({
                 where: { id: Number(parentId) }
@@ -162,11 +171,34 @@ export const createComment = async (req, res) => {
             }
         }
 
+        const commentingUser = await prisma.user.findUnique({
+            where: { id: Number(authorId) },
+            select: { name: true }
+        });
+
+        if (!commentingUser || !commentingUser.name) {
+            return res.status(400).json({ error: "User name not found." });
+        }
+
         const newComment = await prisma.comment.create ({ 
             data: { authorId, postId: Number(postId), content, parentId: parentId ? Number(parentId) : null },
         });
+
+        if (post.authorId !== authorId) {
+            await prisma.notification.create({
+                data: {
+                    type: 'comment',  // Type of notification
+                    content: `${commentingUser.name} commented on your post: "${content}"`,  // Notification content
+                    authorId: post.authorId,  // The post author who will receive the notification
+                    senderId: authorId,     // The user who made the comment
+                    postId: postId          // The post related to the notification
+                }
+            });
+        }
+
         res.json(newComment);
     } catch (error) {
+        console.error("Error creating comment:", error);
         res.status(500).json({ error: error.message });
     }
 };

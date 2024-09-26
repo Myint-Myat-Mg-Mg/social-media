@@ -22,7 +22,7 @@ export const createStory = async (req, res) => {
             data: {
                 authorId,
                 content,
-                image: imagePath,
+                image: imagePath ? imagePath[0] : null,
                 expiresAt: expirationTime,
             },
         });

@@ -31,8 +31,28 @@ export const followUser = async (req, res) => {
             }
         });
 
+        const follower = await prisma.user.findUnique({
+            where: { id: followerId },
+            select: { name: true }
+        })
+
+        if (!follower || !follower.name) {
+            return res.status(400).json({ error: "Follower's name not found." });
+        }
+
+
+        await prisma.notification.create({
+            data: {
+                type: 'follow',  // Notification type
+                content: `${follower.name} started following you`,  // Notification message
+                authorId: Number(followingId),  // The followed user (receiver)
+                senderId: followerId          // The follower (sender)
+            }
+        });
+
         res.status(200).json({ message: "Successfully followed the user.", follow: newFollow });
     } catch (error) {
+        console.error("Error following user:", error);
         res.status(500).json({ error: "An error occurred while following the user." });
     }
 };
